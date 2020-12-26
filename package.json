@@ -1,0 +1,35 @@
+{
+  "name": "mc-anvil",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://www.github.com/hpratt/mc-anvil"
+  },
+  "keywords": [
+    "Minecraft",
+    "Anvil",
+    "NBT"
+  ],
+  "files": [
+    "/dist"
+  ],
+  "devDependencies": {
+    "@types/jest": "^26.0.13",
+    "@types/node": "^10.9.4",
+    "@types/pako": "^1.0.1",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.3.0",
+    "typescript": "^3.8.0",
+    "axios": "^0.18.0"
+  },
+  "dependencies": {
+    "pako": "^2.0.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  }
+}
