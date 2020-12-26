@@ -1,2 +1,3 @@
 export { NBTParser } from './nbt';
-export type { TagType, TagData, TagPayload } from './types';
+export { TagType } from './types';
+export type { TagData, TagPayload } from './types';
