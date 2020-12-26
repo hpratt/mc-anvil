@@ -4,6 +4,7 @@ import { BinaryParser } from '../util';
 import { ChunkDataDescriptor, CompressionType, LocationEntry } from './types';
 
 const LOCATION_ENTRIES_PER_FILE = 1024;
+const LOCATION_ENTRY_SIZE = 4;
 const SECTOR_SIZE = 4096;
 
 export class AnvilParser extends BinaryParser {
@@ -24,7 +25,7 @@ export class AnvilParser extends BinaryParser {
     }
 
     getTimestamps(): number[] {
-        this.position = LOCATION_ENTRIES_PER_FILE * 4;
+        this.position = LOCATION_ENTRIES_PER_FILE * LOCATION_ENTRY_SIZE;
         const r: number[] = [];
         for (let i = 0; i < LOCATION_ENTRIES_PER_FILE; ++i)
             r.push(this.getUInt());
