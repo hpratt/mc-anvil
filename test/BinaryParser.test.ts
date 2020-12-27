@@ -64,8 +64,16 @@ describe("BinaryParser", () => {
 
 	it("should read a long", async () => {
 		const b = new BinaryParser(testArrayBuffer());
-		const r = [ b.getLong() ];
-		expect(r).toEqual([ 283686952306183 ]);
+		const r = [ b.getInt64() ];
+		expect(r).toEqual([ 283686952306183n ]);
+		expect(b.currentPosition()).toBe(8);
+		expect(b.remainingLength()).toBe(0);
+	});
+
+	it("should read a long", async () => {
+		const b = new BinaryParser(testArrayBuffer());
+		const r = [ b.getUInt64() ];
+		expect(r).toEqual([ 283686952306183n ]);
 		expect(b.currentPosition()).toBe(8);
 		expect(b.remainingLength()).toBe(0);
 	});

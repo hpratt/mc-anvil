@@ -10,7 +10,7 @@ export class NBTParser extends BinaryParser {
         [ TagType.SHORT, this.getShort.bind(this) ],
         [ TagType.INT, this.getInt.bind(this) ],
         [ TagType.INT_ARRAY, this.getIntArrayTag.bind(this) ],
-        [ TagType.LONG, this.getLong.bind(this) ],
+        [ TagType.LONG, this.getInt64.bind(this) ],
         [ TagType.LONG_ARRAY, this.getLongArrayTag.bind(this) ],
         [ TagType.FLOAT, this.getFloat.bind(this) ],
         [ TagType.DOUBLE, this.getDouble.bind(this) ],
@@ -35,7 +35,10 @@ export class NBTParser extends BinaryParser {
     }
 
     private getLongArrayTag(): TagPayload {
-        return this.getNumberArrayTag(this.getLong.bind(this));
+        const data: bigint[] = [];
+        const length = this.getInt();
+        for (let i = 0; i < length; ++i) data.push(this.getInt64());
+        return data;
     }
 
     private getStringTag(): TagPayload {

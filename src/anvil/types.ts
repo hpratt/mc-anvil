@@ -1,3 +1,5 @@
+import { TagData, TagType } from "../nbt";
+
 export type LocationEntry = {
     offset: number;
     sectorCount: number;
@@ -12,4 +14,19 @@ export enum CompressionType {
 export type ChunkDataDescriptor = {
     length: number;
     compressionType: CompressionType;
+};
+
+export type BlockStates = {
+    type: TagType.LONG_ARRAY;
+    name: "BlockStates";
+    data: bigint[];
+};
+
+export type Palette = {
+    type: TagType.LIST;
+    name: "Palette";
+    data: {
+        subType: TagType.COMPOUND;
+        data: TagData[][];
+    };
 };
