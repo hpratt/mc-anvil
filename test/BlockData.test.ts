@@ -5,7 +5,7 @@ import { BlockDataParser, TagType } from "../src";
 const TEST_ARRAY = [ 73335308288n ];
 const TEST_ARRAY_2 = [ 622904999936n ];
 
-describe("AnvilParser", () => {
+describe("BlockDataParser", () => {
 
 	it("should read blocks from a palette of size 12", async () => {
 		const p = await axios.get("http://localhost:8001/palette12.json", { responseType: 'json' });

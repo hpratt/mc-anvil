@@ -30,3 +30,18 @@ export type Palette = {
         data: TagData[][];
     };
 };
+
+export type ChunkRootTag = {
+    type: TagType.COMPOUND;
+    name: "";
+    data: TagData[];
+};
+
+export type ChunkSectionTag = {
+    type: TagType.LIST;
+    name: "Sections";
+    data: {
+        subType: TagType.COMPOUND;
+        data: TagData[][];
+    };
+};

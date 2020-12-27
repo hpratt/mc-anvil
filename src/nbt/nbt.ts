@@ -1,5 +1,14 @@
 import { BinaryParser } from "../util";
-import { TagData, TagPayload, TagType } from "./types";
+import { ListPayload, TagData, TagPayload, TagType } from "./types";
+
+export function findChildTag(tag: TagData, name: string): TagData | undefined {
+    if (tag.type === TagType.COMPOUND) return (tag.data as TagData[]).find(x => x.name === name);
+}
+
+export function findCompoundListChildren(tag: TagData, name: string): (TagData | undefined)[] | undefined {
+    if (tag.type === TagType.LIST && (tag.data as ListPayload).subType === TagType.COMPOUND)
+        return (tag.data as ListPayload).data.map( x => (x as TagData[]).find(x => x.name === name));
+}
 
 export class NBTParser extends BinaryParser {
 

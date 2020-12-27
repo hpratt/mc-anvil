@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { NBTParser } from "../src";
+import { findChildTag } from "../src/nbt/nbt";
 import { TagType } from "../src/nbt/types";
 
 describe("NBTParser", () => {
@@ -8,7 +9,8 @@ describe("NBTParser", () => {
 	it("should read the root compound tag of raids.dat", async () => {
 		const data = await axios.get("http://localhost:8001/raids.dat", { responseType: 'arraybuffer' });
 		const b = new NBTParser(new Uint8Array(data.data).buffer);
-		expect(b.getTag()).toEqual({
+		const tag = b.getTag();
+		expect(tag).toEqual({
 			type: TagType.COMPOUND,
 			name: "",
 			data: [{
@@ -30,6 +32,9 @@ describe("NBTParser", () => {
 				name: ""
 			}]
 		});
+		expect(findChildTag(tag, "data")).not.toBeUndefined();
+		expect(findChildTag(findChildTag(tag, "data")!, "Raids")).not.toBeUndefined();
+		expect(findChildTag(tag, "sections")).toBeUndefined();
 	});
 
 	it("should read level.dat", async () => {

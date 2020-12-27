@@ -23,7 +23,6 @@ export type TagPayload = number | bigint | string | number[] | bigint[] | TagDat
 
 export type TagData = {
     type: TagType;
-    subType?: TagType;
     name: string;
     data: TagPayload | TagPayload[];
 };

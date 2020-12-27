@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { AnvilParser, NBTParser } from "../src";
+import { AnvilParser, chunkCoordinateFromIndex, indexFromChunkCoordinate, indexFromBiomeCoordinate, biomeCoordinateFromIndex, NBTParser, sortedSections } from "../src";
 import { CompressionType } from "../src/anvil/types";
 import { TagType } from "../src/nbt/types";
 
@@ -38,12 +38,35 @@ describe("AnvilParser", () => {
 	});
 
 	it("should read chunk data", async () => {
-		const data = await axios.get("http://localhost:8001/r.-1.-1.mca", { responseType: 'arraybuffer' });
+		const data = await axios.get("http://localhost:8001/r.1.1.mca", { responseType: 'arraybuffer' });
 		const b = new AnvilParser(new Uint8Array(data.data).buffer);
 		const offset = b.getLocationEntries().filter(x => x.offset !== 0)[0].offset;
 		const chunk = new NBTParser(b.getChunkData(offset));
-		expect(chunk.getTag().type).toBe(TagType.COMPOUND);
+		const tag = chunk.getTag();
+		const sections = sortedSections(tag);
+		expect(tag.type).toBe(TagType.COMPOUND);
 		expect(chunk.remainingLength()).toBe(0);
+		expect(sections).not.toBeUndefined();
+		expect(sections?.map(x => x.filter(xx => xx.name === "Y")[0]).map(x => x?.data)).toEqual([
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 255
+		]);
+	});
+
+	it("should compute chunk coordinates", async () => {
+		expect(chunkCoordinateFromIndex(0)).toEqual([ 0, 0, 0 ]);
+		expect(chunkCoordinateFromIndex(256 + 16 + 1)).toEqual([ 1, 1, 1 ]);
+		expect(indexFromChunkCoordinate([ 0, 0, 0 ])).toBe(0);
+		expect(indexFromChunkCoordinate([ 2, 1, 1 ])).toBe(256 + 16 + 2);
+		expect(indexFromChunkCoordinate([ 1, 2, 3 ])).toBe(256 * 2 + 16 * 3 + 1);
+	});
+
+	it("should compute biome coordinates", async () => {
+		expect(biomeCoordinateFromIndex(0)).toEqual([ 0, 0 ]);
+		expect(biomeCoordinateFromIndex(16 + 2)).toEqual([ 2, 1 ]);
+		expect(biomeCoordinateFromIndex(16 * 2 + 1)).toEqual([ 1, 2 ]);
+		expect(indexFromBiomeCoordinate([ 0, 0 ])).toBe(0);
+		expect(indexFromBiomeCoordinate([ 2, 1 ])).toBe(16 + 2);
+		expect(indexFromBiomeCoordinate([ 1, 3 ])).toBe(16 * 3 + 1);
 	});
 
 });
