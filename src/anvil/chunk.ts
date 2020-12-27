@@ -35,14 +35,15 @@ export function indexFromChunkCoordinate(coordinate: [ number, number, number ])
     return (y * 16 + z) * 16 + x;
 }
 
-export function biomeCoordinateFromIndex(index: number): [ number, number ] {
+export function biomeCoordinateFromIndex(index: number): [ number, number, number ] {
     return [
-        index % 16,
-        Math.floor(index / 16) % 16
+        index % 4,
+        Math.floor(index / 16),
+        Math.floor(index / 4) % 4
     ];
 }
 
-export function indexFromBiomeCoordinate(coordinate: [ number, number ]): number {
-    const [ x, z ] = coordinate;
-    return z * 16 + x;
+export function indexFromBiomeCoordinate(coordinate: [ number, number, number ]): number {
+    const [ x, y, z ] = coordinate;
+    return (y * 4 + z) * 4 + x;
 }

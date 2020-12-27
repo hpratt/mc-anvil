@@ -61,12 +61,12 @@ describe("AnvilParser", () => {
 	});
 
 	it("should compute biome coordinates", async () => {
-		expect(biomeCoordinateFromIndex(0)).toEqual([ 0, 0 ]);
-		expect(biomeCoordinateFromIndex(16 + 2)).toEqual([ 2, 1 ]);
-		expect(biomeCoordinateFromIndex(16 * 2 + 1)).toEqual([ 1, 2 ]);
-		expect(indexFromBiomeCoordinate([ 0, 0 ])).toBe(0);
-		expect(indexFromBiomeCoordinate([ 2, 1 ])).toBe(16 + 2);
-		expect(indexFromBiomeCoordinate([ 1, 3 ])).toBe(16 * 3 + 1);
+		expect(biomeCoordinateFromIndex(0)).toEqual([ 0, 0, 0 ]);
+		expect(biomeCoordinateFromIndex(16 + 2)).toEqual([ 2, 1, 0 ]);
+		expect(biomeCoordinateFromIndex(16 * 2 + 3 * 4 + 1)).toEqual([ 1, 2, 3 ]);
+		expect(indexFromBiomeCoordinate([ 0, 0, 0 ])).toBe(0);
+		expect(indexFromBiomeCoordinate([ 2, 1, 0])).toBe(16 + 2);
+		expect(indexFromBiomeCoordinate([ 1, 3, 2 ])).toBe(16 * 3 + 2 * 4 + 1);
 	});
 
 });
