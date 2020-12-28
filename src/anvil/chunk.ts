@@ -2,6 +2,10 @@ import { BlockStates, ChunkRootTag, ChunkSectionTag, Coordinate3D, Palette } fro
 import { TagData, TagType } from "../nbt";
 import { findChildTag, findCompoundListChildren } from "../nbt/nbt";
 import { BlockDataParser } from './block';
+import { BinaryParser, BitParser } from '../util';
+
+export const AIR = -968583441; // hash of "minecraft:air()"
+export const BLOCKS_PER_CHUNK = 4096; // 16 * 16 * 16
 
 export function isValidChunkSectionTag(tag?: TagData): tag is ChunkSectionTag {
     const t = tag as ChunkSectionTag;
@@ -43,7 +47,7 @@ export function findBlocksByName(chunkRootTag: TagData, name: string): Coordinat
         return (new BlockDataParser(blockData as BlockStates, palette as Palette))
             .findBlocksByName(name)
             .map(chunkCoordinateFromIndex)
-            .map(x => [ x[0] + xx, x[1] + 16 * yy, x[2] + zz ] as Coordinate3D);
+            .map(x => [ x[0] + xx, x[1] + yy, x[2] + zz ] as Coordinate3D);
     });
 }
 
@@ -71,4 +75,55 @@ export function biomeCoordinateFromIndex(index: number): Coordinate3D {
 export function indexFromBiomeCoordinate(coordinate: Coordinate3D): number {
     const [ x, y, z ] = coordinate;
     return (y * 4 + z) * 4 + x;
+}
+
+function emptyX(limit: number = 256): number[][] {
+    const r: number[][] = [];
+    for (let i = 0; i < limit; ++i) {
+        const c = [];
+        for (let j = 0; j < 16; ++j) c.push(AIR);
+        r.push(c);
+    }
+    return r;
+}
+
+export function blockStateTensor(chunkRootTag: TagData): number[][][] {
+    const r: number[][][] = [];
+    for (let x = 0; x < 16; ++x) r.push(emptyX());
+    const sections = sortedSections(chunkRootTag) || [];
+    sections.forEach( (section, y) => {
+        const yy = y * 16;
+        const blockData = section.find(x => x.name === "BlockStates");
+        const palette = section.find(x => x.name === "Palette");
+        if (blockData === undefined || palette === undefined) return [];
+        const b = new BlockDataParser(blockData as BlockStates, palette as Palette);
+        b.getBlockTypeIDs().forEach( (v, i) => {
+            const [ x, y, z ] = chunkCoordinateFromIndex(i);
+            r[x][y + yy][z] = v || AIR;
+        });
+    });
+    return r;
+}
+
+export function worldHeights(tag: TagData, name: string = "WORLD_SURFACE") : number[][] | undefined {
+
+    if (!isValidChunkRootTag(tag)) return;
+    
+    const r: number[][] = emptyX(16);
+    const levelTag = findChildTag(tag as ChunkRootTag, x => x.name === "Level");
+    const heightMaps = levelTag && findChildTag(levelTag, x => x.name === "Heightmaps");
+    const map = heightMaps && findChildTag(heightMaps, x => x.name === name);
+    if (map === undefined || map.type !== TagType.LONG_ARRAY || !map.data) return;
+
+    const d = new BinaryParser(map.data as ArrayBuffer);
+    const b = new BigUint64Array(d.remainingLength() / 8);
+    for (let i = 0; i < b.length; ++i) b[i] = d.getUInt64();
+    const p = new BitParser(b.buffer);
+
+    for (let i = 0; i < 256; ++i) {
+        if (i % 7 === 0) p.getBits(1);
+        r[i % 16][Math.floor(i / 16)] = p.getBits(9);
+    }
+    return r;
+
 }

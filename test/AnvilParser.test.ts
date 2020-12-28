@@ -1,9 +1,8 @@
 import axios from "axios";
 
 import { AnvilParser, chunkCoordinateFromIndex, indexFromChunkCoordinate, indexFromBiomeCoordinate, biomeCoordinateFromIndex, NBTParser, sortedSections } from "../src";
-import { findBlocksByName } from "../src/anvil";
+import { blockStateTensor, findBlocksByName, worldHeights } from "../src/anvil";
 import { CompressionType } from "../src/anvil/types";
-import { findChildTag } from "../src/nbt/nbt";
 import { TagType } from "../src/nbt/types";
 
 function testArrayBuffer() {
@@ -46,6 +45,7 @@ describe("AnvilParser", () => {
 		const chunk = new NBTParser(b.getChunkData(offset));
 		const tag = chunk.getTag();
 		const sections = sortedSections(tag);
+		const t = blockStateTensor(tag);
 		expect(tag.type).toBe(TagType.COMPOUND);
 		expect(chunk.remainingLength()).toBe(0);
 		expect(sections).not.toBeUndefined();
@@ -53,6 +53,11 @@ describe("AnvilParser", () => {
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 255
 		]);
 		expect(findBlocksByName(tag, "minecraft:diamond_ore")).toEqual([[ 516, 3, 515 ], [ 517, 3, 515 ]]);
+		expect(t.length).toBe(16);
+		expect(t[0].length).toBe(256);
+		expect(t[0][0].length).toBe(16);
+		expect(worldHeights(tag)).not.toBeUndefined();
+		expect(worldHeights(tag)![0]!).toEqual([ 77, 74, 77, 78, 75, 73, 77, 78, 76, 77, 77, 78, 72, 77, 77, 75 ]);
 	});
 
 	it("should compute chunk coordinates", async () => {

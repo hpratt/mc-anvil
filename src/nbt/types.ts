@@ -19,7 +19,7 @@ export type ListPayload = {
     data: TagPayload[];
 };
 
-export type TagPayload = number | bigint | string | number[] | bigint[] | TagData[] | string[] | ListPayload | null;
+export type TagPayload = number | bigint | string | number[] | TagData[] | string[] | ListPayload | ArrayBuffer | null;
 
 export type TagData = {
     type: TagType;

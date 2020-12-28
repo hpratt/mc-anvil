@@ -1,7 +1,7 @@
 export { AnvilParser } from './anvil';
-export { BlockDataParser } from './block';
+export { BlockDataParser, blockTypeString, blockTypeID } from './block';
 export {
     sortedSections, isValidChunkRootTag, isValidChunkSectionTag, indexFromChunkCoordinate, chunkCoordinateFromIndex, indexFromBiomeCoordinate,
-    biomeCoordinateFromIndex, findBlocksByName
+    biomeCoordinateFromIndex, findBlocksByName, blockStateTensor, worldHeights
 } from './chunk';
 export type { ChunkDataDescriptor, CompressionType, LocationEntry, Palette, BlockStates, ChunkRootTag, ChunkSectionTag } from './types';

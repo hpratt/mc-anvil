@@ -19,7 +19,7 @@ export type ChunkDataDescriptor = {
 export type BlockStates = {
     type: TagType.LONG_ARRAY;
     name: "BlockStates";
-    data: bigint[];
+    data: ArrayBuffer;
 };
 
 export type Palette = {
