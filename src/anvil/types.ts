@@ -45,3 +45,5 @@ export type ChunkSectionTag = {
         data: TagData[][];
     };
 };
+
+export type Coordinate3D = [ number, number, number ];

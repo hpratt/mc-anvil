@@ -32,9 +32,9 @@ describe("NBTParser", () => {
 				name: ""
 			}]
 		});
-		expect(findChildTag(tag, "data")).not.toBeUndefined();
-		expect(findChildTag(findChildTag(tag, "data")!, "Raids")).not.toBeUndefined();
-		expect(findChildTag(tag, "sections")).toBeUndefined();
+		expect(findChildTag(tag, x => x.name === "data")).not.toBeUndefined();
+		expect(findChildTag(findChildTag(tag, x => x.name === "data")!, x => x.name === "Raids")).not.toBeUndefined();
+		expect(findChildTag(tag, x => x.name === "sections")).toBeUndefined();
 	});
 
 	it("should read level.dat", async () => {

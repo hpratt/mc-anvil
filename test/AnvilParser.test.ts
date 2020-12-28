@@ -1,7 +1,9 @@
 import axios from "axios";
 
 import { AnvilParser, chunkCoordinateFromIndex, indexFromChunkCoordinate, indexFromBiomeCoordinate, biomeCoordinateFromIndex, NBTParser, sortedSections } from "../src";
+import { findBlocksByName } from "../src/anvil";
 import { CompressionType } from "../src/anvil/types";
+import { findChildTag } from "../src/nbt/nbt";
 import { TagType } from "../src/nbt/types";
 
 function testArrayBuffer() {
@@ -50,6 +52,7 @@ describe("AnvilParser", () => {
 		expect(sections?.map(x => x.filter(xx => xx.name === "Y")[0]).map(x => x?.data)).toEqual([
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 255
 		]);
+		expect(findBlocksByName(tag, "minecraft:diamond_ore")).toEqual([[ 516, 3, 515 ], [ 517, 3, 515 ]]);
 	});
 
 	it("should compute chunk coordinates", async () => {
