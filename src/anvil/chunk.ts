@@ -1,6 +1,6 @@
 import { BlockStates, ChunkRootTag, ChunkSectionTag, Coordinate3D, Palette } from './types';
 import { TagData, TagType } from "../nbt";
-import { findChildTag, findChildTagAtPath, findCompoundListChildren } from "../nbt/nbt";
+import { findChildTagAtPath, findCompoundListChildren } from "../nbt/nbt";
 import { BlockDataParser } from './block';
 import { BinaryParser, BitParser } from '../util';
 
@@ -20,8 +20,7 @@ export function isValidChunkRootTag(tag?: TagData): tag is ChunkRootTag {
 
 export function sortedSections(tag: TagData): TagData[][] | undefined {
     if (!isValidChunkRootTag(tag)) return;
-    const levelTag = findChildTag(tag as ChunkRootTag, x => x.name === "Level");
-    const sectionTag = levelTag && findChildTag(levelTag, x => x.name === "Sections");
+    const sectionTag = findChildTagAtPath("Level/Sections", tag);
     if (!isValidChunkSectionTag(sectionTag)) return [];
     const yTags = findCompoundListChildren(sectionTag!, x => x.name === "Y")?.map( (v, i) => ({ v, i }) ).filter(x => x.v);
     return yTags?.sort( (a, b) => (a.v!.data as number) - (b.v!.data as number) ).map( x => sectionTag.data.data[x.i] );
