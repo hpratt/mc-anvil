@@ -1,6 +1,6 @@
 import { BlockStates, ChunkRootTag, ChunkSectionTag, Coordinate3D, Palette } from './types';
 import { TagData, TagType } from "../nbt";
-import { findChildTag, findCompoundListChildren } from "../nbt/nbt";
+import { findChildTag, findChildTagAtPath, findCompoundListChildren } from "../nbt/nbt";
 import { BlockDataParser } from './block';
 import { BinaryParser, BitParser } from '../util';
 
@@ -29,9 +29,8 @@ export function sortedSections(tag: TagData): TagData[][] | undefined {
 
 export function getCoordinates(tag: TagData): [ number, number ] | undefined {
     if (!isValidChunkRootTag(tag)) return;
-    const levelTag = findChildTag(tag as ChunkRootTag, x => x.name === "Level");
-    const x = levelTag && findChildTag(levelTag, x => x.name === "xPos")?.data;
-    const z = levelTag && findChildTag(levelTag, x => x.name === "zPos")?.data;
+    const x = findChildTagAtPath("Level/xPos", tag)?.data;
+    const z = findChildTagAtPath("Level/zPos", tag)?.data;
     if (x !== undefined && z !== undefined) return [ x as number * 16, z as number * 16 ];
 }
 
@@ -110,9 +109,7 @@ export function worldHeights(tag: TagData, name: string = "WORLD_SURFACE") : num
     if (!isValidChunkRootTag(tag)) return;
     
     const r: number[][] = emptyX(16);
-    const levelTag = findChildTag(tag as ChunkRootTag, x => x.name === "Level");
-    const heightMaps = levelTag && findChildTag(levelTag, x => x.name === "Heightmaps");
-    const map = heightMaps && findChildTag(heightMaps, x => x.name === name);
+    const map = findChildTagAtPath(`Level/Heightmaps/${name}`, tag);
     if (map === undefined || map.type !== TagType.LONG_ARRAY || !map.data) return;
 
     const d = new BinaryParser(map.data as ArrayBuffer);

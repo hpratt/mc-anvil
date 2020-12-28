@@ -1,8 +1,6 @@
 import axios from "axios";
 
-import { NBTParser } from "../src";
-import { findChildTag } from "../src/nbt/nbt";
-import { TagType } from "../src/nbt/types";
+import { NBTParser, findChildTag, TagType, findChildTagAtPath } from "../src";
 
 describe("NBTParser", () => {
 
@@ -35,6 +33,8 @@ describe("NBTParser", () => {
 		expect(findChildTag(tag, x => x.name === "data")).not.toBeUndefined();
 		expect(findChildTag(findChildTag(tag, x => x.name === "data")!, x => x.name === "Raids")).not.toBeUndefined();
 		expect(findChildTag(tag, x => x.name === "sections")).toBeUndefined();
+		expect(findChildTagAtPath("data/Raids", tag)).not.toBeUndefined();
+		expect(findChildTagAtPath("data/sections", tag)).toBeUndefined();
 	});
 
 	it("should read level.dat", async () => {
