@@ -75,11 +75,11 @@ export function indexFromBiomeCoordinate(coordinate: Coordinate3D): number {
     return (y * 4 + z) * 4 + x;
 }
 
-function emptyX(limit: number = 256): number[][] {
+function emptyX(limit: number = 256, innerLimit: number = 16): number[][] {
     const r: number[][] = [];
     for (let i = 0; i < limit; ++i) {
         const c = [];
-        for (let j = 0; j < 16; ++j) c.push(AIR);
+        for (let j = 0; j < innerLimit; ++j) c.push(AIR);
         r.push(c);
     }
     return r;
@@ -122,4 +122,18 @@ export function worldHeights(tag: TagData, name: string = "WORLD_SURFACE") : num
     }
     return r;
 
+}
+
+export function biomesAtWorldHeight(tag: TagData, worldHeightName: string = "WORLD_SURFACE"): number[][] | undefined {
+    const r = emptyX(4, 4);
+    const biomes = findChildTagAtPath("Level/Biomes", tag)?.data as number[];
+    const heights = worldHeights(tag, worldHeightName);
+    if (biomes === undefined || heights === undefined) return undefined;
+    for (let x = 0; x < 4; ++x) {
+        for (let z = 0; z < 4; ++z) {
+            const biomeIndex = indexFromBiomeCoordinate([ x, Math.floor( heights[x * 4][z * 4] / 4 ), z ]);
+            r[x][z] = biomes[biomeIndex];
+        }
+    }
+    return r;
 }

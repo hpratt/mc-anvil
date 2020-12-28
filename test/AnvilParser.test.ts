@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { AnvilParser, chunkCoordinateFromIndex, indexFromChunkCoordinate, indexFromBiomeCoordinate, biomeCoordinateFromIndex, NBTParser, sortedSections } from "../src";
 import { blockStateTensor, findBlocksByName, worldHeights } from "../src/anvil";
+import { biomesAtWorldHeight } from "../src/anvil/chunk";
 import { CompressionType } from "../src/anvil/types";
 import { TagType } from "../src/nbt/types";
 
@@ -58,6 +59,7 @@ describe("AnvilParser", () => {
 		expect(t[0][0].length).toBe(16);
 		expect(worldHeights(tag)).not.toBeUndefined();
 		expect(worldHeights(tag)![0]!).toEqual([ 77, 74, 77, 78, 75, 73, 77, 78, 76, 77, 77, 78, 72, 77, 77, 75 ]);
+		expect(biomesAtWorldHeight(tag)).toEqual([[ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ]]);
 	});
 
 	it("should compute chunk coordinates", async () => {

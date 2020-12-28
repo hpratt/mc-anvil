@@ -12,12 +12,12 @@ export function findCompoundListChildren(tag: TagData, f: (x: TagData) => boolea
 
 export function findChildTagAtPath(path: string, tag?: TagData): TagData | undefined {
     const p = path.split('/');
-    for (let i = 0; i < path.length; ++i) {
+    for (let i = 0; i < p.length; ++i) {
         if (!tag || !tag.type) return;
         if (tag.type === TagType.COMPOUND)
             tag = findChildTag(tag, x => x.name === p[i]);
         else if (tag.type === TagType.LIST && (tag.data as ListPayload).subType === TagType.COMPOUND)
-            tag = { type: TagType.COMPOUND, name: "", data: ((tag.data as ListPayload).data as TagData[][])[+p[i]] };
+            tag = { type: TagType.COMPOUND, name: "", data: ((tag.data as ListPayload).data as TagData[][])[+p[i]] || [] };
     }
     return tag;
 }
