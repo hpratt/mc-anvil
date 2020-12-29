@@ -3,14 +3,9 @@ import axios from "axios";
 import { BlockDataParser, TagType } from "../src";
 
 function TEST_ARRAY() {
-	const c = new BigUint64Array(1);
-	c[0] = 73335308288n;
-	return c.buffer;
-}
-
-function TEST_ARRAY_2() {
-	const c = new BigUint64Array(1);
-	c[0] = 622904999936n;
+	const c = new Uint32Array(2);
+	c[0] = 285212672;
+	c[1] = 8211;
 	return c.buffer;
 }
 
@@ -23,7 +18,7 @@ describe("BlockDataParser", () => {
 			name: "BlockStates",
 			data: TEST_ARRAY()
 		}, p.data);
-		expect(b.getBlocks(true, 16)).toEqual([ 0, 0, 0, 0, 0, 2, 3, 1, 1, 1, 0, 0, 0, 0, 0, 0 ].reverse().map( x => p.data.data.data[x] ));
+		expect(b.getBlocks(true, 16)).toEqual([ 0, 0, 0, 0, 2, 0, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0 ].map( x => p.data.data.data[x] ));
 	});
 
 	it("should read blocks from a palette of size 4", async () => {
@@ -33,7 +28,7 @@ describe("BlockDataParser", () => {
 			name: "BlockStates",
 			data: TEST_ARRAY()
 		}, p.data);
-		expect(b.getBlocks(true, 16).slice(0, 20)).toEqual([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 ].map( x => p.data.data.data[x] ));
+		expect(b.getBlocks(true, 16).slice(0, 20)).toEqual([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 3 ].map( x => p.data.data.data[x] ));
 	});
 
 	it("should read block type names from a palette of size 4", async () => {
@@ -63,9 +58,9 @@ describe("BlockDataParser", () => {
 		const b = new BlockDataParser({
 			type: TagType.LONG_ARRAY,
 			name: "BlockStates",
-			data: TEST_ARRAY_2()
+			data: TEST_ARRAY()
 		}, p.data);
-		expect(b.getBlocks(true, 16).slice(0, 13)).toEqual([ 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 2, 0, 4 ].map( x => p.data.data.data[x] ));
+		expect(b.getBlocks(true, 16).slice(0, 12)).toEqual([ 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 6, 1 ].map( x => p.data.data.data[x] ));
 	});
 
 });
