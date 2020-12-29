@@ -43,7 +43,7 @@ export class AnvilParser extends BinaryParser {
     getChunkData(offset?: number): ArrayBuffer {
         if (offset !== undefined) this.position = offset * SECTOR_SIZE;
         const descriptor = this.getChunkDataDescriptor();
-        const data = this.view.buffer.slice(this.position, this.position + descriptor.length);
+        const data = this.view.buffer.slice(this.position, this.position + descriptor.length - 1);
         this.position += descriptor.length;
         switch (descriptor.compressionType) {
             case CompressionType.NONE:
