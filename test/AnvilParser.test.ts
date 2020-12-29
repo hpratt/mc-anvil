@@ -47,6 +47,7 @@ describe("AnvilParser", () => {
 		const tag = chunk.getTag();
 		const sections = sortedSections(tag);
 		const t = blockStateTensor(tag);
+		const wh = worldHeights(tag);
 		expect(tag.type).toBe(TagType.COMPOUND);
 		expect(chunk.remainingLength()).toBe(0);
 		expect(sections).not.toBeUndefined();
@@ -57,8 +58,8 @@ describe("AnvilParser", () => {
 		expect(t.length).toBe(16);
 		expect(t[0].length).toBe(256);
 		expect(t[0][0].length).toBe(16);
-		expect(worldHeights(tag)).not.toBeUndefined();
-		expect(worldHeights(tag)![0]!).toEqual([ 77, 74, 77, 78, 75, 73, 77, 78, 76, 77, 77, 78, 72, 77, 77, 75 ]);
+		expect(wh).not.toBeUndefined();
+		expect(wh![wh!.length - 1]).toEqual([ 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 76, 76, 76, 76 ]);
 		expect(biomesAtWorldHeight(tag)).toEqual([[ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ], [ 131, 131, 131, 131 ]]);
 	});
 

@@ -116,9 +116,13 @@ export function worldHeights(tag: TagData, name: string = "WORLD_SURFACE") : num
     for (let i = 0; i < b.length; ++i) b[i] = d.getUInt64();
     const p = new BitParser(b.buffer);
 
-    for (let i = 0; i < 256; ++i) {
+    for (let i = 0; i < 259; ++i) {
+        const ii = i + 6 - 2 * (i % 7);
+        const x = ii % 16;
+        const z = Math.floor(ii / 16);
         if (i % 7 === 0) p.getBits(1);
-        r[i % 16][Math.floor(i / 16)] = p.getBits(9);
+        const cc = p.getBits(9);
+        if (x < 16 && z < 16) r[x][z] = cc;
     }
     return r;
 
