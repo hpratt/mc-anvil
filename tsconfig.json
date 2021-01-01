@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
-        "lib": ["es5", "es6", "dom", "es2015", "es2017", "ES2020"],
+        "lib": ["es5", "es6", "dom", "es2015", "es2017", "es2019", "ES2020"],
         "moduleResolution": "node",
         "declaration": true,
         "removeComments": true,
@@ -14,4 +14,4 @@
     "include": [
         "src/**/*"
     ]
-  }
+}
