@@ -1,4 +1,5 @@
 import { BinaryParser } from "../util";
+import { inflate } from 'pako';
 import { ListPayload, TagData, TagPayload, TagType } from "./types";
 
 export function findChildTag(tag: TagData, f: (x: TagData) => boolean): TagData | undefined {
@@ -22,7 +23,21 @@ export function findChildTagAtPath(path: string, tag?: TagData): TagData | undef
     return tag;
 }
 
+function tryInflate(buffer: ArrayBuffer): ArrayBuffer {
+    try {
+        const b = inflate(new Uint8Array(buffer));
+        if (!b) throw new Error("not compressed");
+        return b.buffer;
+    } catch (e) {
+        return buffer;
+    }
+}
+
 export class NBTParser extends BinaryParser {
+
+    constructor(data: ArrayBuffer) {
+        super(tryInflate(data));
+    }
 
     private tagReaders: Map<TagType, () => TagPayload> = new Map([
         [ TagType.END, () => null ],

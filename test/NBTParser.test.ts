@@ -44,4 +44,11 @@ describe("NBTParser", () => {
 		expect(b.remainingLength()).toBe(0);
 	});
 
+	it("should read level.dat.gz", async () => {
+		const data = await axios.get("http://localhost:8001/level.dat.gz", { responseType: 'arraybuffer' });
+		const b = new NBTParser(new Uint8Array(data.data).buffer);
+		expect(b.getTag().type).toBe(TagType.COMPOUND);
+		expect(b.remainingLength()).toBe(0);
+	});
+
 });
