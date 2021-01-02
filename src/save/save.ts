@@ -37,4 +37,10 @@ export class SaveParser {
         });
     }
 
+    async getLevel(): Promise<FileEntry> {
+        return new Promise( (resolve, reject) => {
+            this.root.getFile("level.dat", undefined, resolve, reject);
+        });
+    }
+
 }

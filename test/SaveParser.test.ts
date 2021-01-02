@@ -26,10 +26,13 @@ describe("SaveParser", () => {
         new MockFileEntry("r.1.2.mca", REGIONS);
         new MockFileEntry("r.1.100.mca", ROOT);
         new MockFileEntry("x.1.100.mca", REGIONS);
-        const f = await new SaveParser(ROOT).getRegions();
+        new MockFileEntry("level.dat", ROOT);
+        const parser = new SaveParser(ROOT);
+        const f = await parser.getRegions();
         expect(f.length).toBe(1);
         expect(f[0].x).toBe(1);
         expect(f[0].z).toBe(2);
+        expect(await parser.getLevel()).not.toBeUndefined();
     });
     
 });
