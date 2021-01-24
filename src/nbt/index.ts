@@ -2,3 +2,4 @@ export { NBTParser, findChildTagAtPath, findChildTag, findCompoundListChildren }
 export { TagType } from './types';
 export type { TagData, TagPayload } from './types';
 export { nbtTagReducer } from './reducer';
+export type { NBTAction } from './reducer';
