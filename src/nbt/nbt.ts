@@ -2,8 +2,19 @@ import { BinaryParser } from "../util";
 import { inflate } from 'pako';
 import { ListPayload, TagData, TagPayload, TagType } from "./types";
 
+export const LIST_INDEX = /^[\[][0-9]+[\]]$/;
+
+export function parseCompoundListIndex(value: string): number {
+    if (value.match(LIST_INDEX) !== null) return +value.slice(1, value.length - 1);
+    return +value;
+}
+
 export function findChildTag(tag: TagData, f: (x: TagData) => boolean): TagData | undefined {
     if (tag.type === TagType.COMPOUND) return (tag.data as TagData[]).find(f);
+}
+
+export function findChildTagIndex(tag: TagData, f: (x: TagData) => boolean): number | undefined {
+    if (tag.type === TagType.COMPOUND) return (tag.data as TagData[]).findIndex(f);
 }
 
 export function findCompoundListChildren(tag: TagData, f: (x: TagData) => boolean): (TagData | undefined)[] | undefined {
@@ -17,10 +28,22 @@ export function findChildTagAtPath(path: string, tag?: TagData): TagData | undef
         if (!tag || !tag.type) return;
         if (tag.type === TagType.COMPOUND)
             tag = findChildTag(tag, x => x.name === p[i]);
-        else if (tag.type === TagType.LIST && (tag.data as ListPayload).subType === TagType.COMPOUND)
-            tag = { type: TagType.COMPOUND, name: "", data: ((tag.data as ListPayload).data as TagData[][])[+p[i]] || [] };
+        else if (tag.type === TagType.LIST && (tag.data as ListPayload).subType === TagType.COMPOUND) {
+            const data = ((tag.data as ListPayload).data as TagData[][])[parseCompoundListIndex(p[i])];
+            tag = data ? { type: TagType.COMPOUND, name: "", data } : undefined;
+        }
     }
     return tag;
+}
+
+export function parent(path: string): string {
+    const p = path.split("/");
+    return p.slice(0, p.length - 1).join("/");
+}
+
+export function baseName(path: string): string {
+    const p = path.split("/");
+    return p[p.length - 1];
 }
 
 function tryInflate(buffer: ArrayBuffer): ArrayBuffer {

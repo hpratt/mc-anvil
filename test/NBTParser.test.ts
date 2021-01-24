@@ -1,6 +1,32 @@
 import axios from "axios";
 
-import { NBTParser, findChildTag, TagType, findChildTagAtPath } from "../src";
+import { NBTParser, findChildTag, TagType, findChildTagAtPath, TagData } from "../src";
+
+export const TEST_TAG_WITH_LIST: TagData = {
+    type: TagType.COMPOUND,
+    name: "",
+    data: [{
+        type: TagType.COMPOUND,
+        name: 'data',
+        data: [{
+            type: TagType.LIST,
+            name: 'Inventory',
+            data: {
+                subType: 10,
+                data: [
+                    [{ type: TagType.END, name: '', data: null }],
+                    [{ type: TagType.INT, name: "test", data: 111 }, { type: TagType.END, name: '', data: null }]
+                ]
+            }
+        }, {
+            type: TagType.END, name: '', data: null
+        }]
+    }, {
+        type: TagType.END,
+        data: null,
+        name: ""
+    }]
+};
 
 describe("NBTParser", () => {
 
@@ -50,5 +76,19 @@ describe("NBTParser", () => {
 		expect(b.getTag().type).toBe(TagType.COMPOUND);
 		expect(b.remainingLength()).toBe(0);
 	});
+
+	it("should find child tags in a compound list", () => {
+		expect(findChildTagAtPath("data/Inventory/[0]", TEST_TAG_WITH_LIST)).toEqual({
+			type: TagType.COMPOUND,
+			name: "",
+			data: [{ type: TagType.END, name: "", data: null }]
+		});
+		expect(findChildTagAtPath("data/Inventory/[1]", TEST_TAG_WITH_LIST)).toEqual({
+			type: TagType.COMPOUND,
+			name: "",
+			data: [{ type: TagType.INT, name: "test", data: 111 }, { type: TagType.END, name: "", data: null }]
+		});
+		expect(findChildTagAtPath("data/Inventory/[2]", TEST_TAG_WITH_LIST)).toBeUndefined();
+	})
 
 });

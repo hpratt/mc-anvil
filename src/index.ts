@@ -4,7 +4,7 @@ export {
     indexFromBiomeCoordinate, biomeCoordinateFromIndex, findBlocksByName, blockTypeString, blockTypeID, blockStateTensor, worldHeights, biomesAtWorldHeight
 } from './anvil';
 export type { ChunkDataDescriptor, CompressionType, LocationEntry, Palette, BlockStates, ChunkRootTag, ChunkSectionTag } from './anvil';
-export { NBTParser, TagType, findChildTag, findChildTagAtPath, findCompoundListChildren } from './nbt';
+export { NBTParser, TagType, findChildTag, findChildTagAtPath, findCompoundListChildren, nbtTagReducer } from './nbt';
 export type { TagData, TagPayload } from './nbt';
 export { isValidRegionFileName, parseRegionName, SaveParser } from './save';
 export type { RegionFile } from './save';
