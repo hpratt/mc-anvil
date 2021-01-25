@@ -1,4 +1,4 @@
-import { baseName, findChildTagAtPath, LIST_INDEX, parent, parseCompoundListIndex } from "./nbt";
+import { baseName, findChildTagAtPath, firstNonExistentSubPath, LIST_INDEX, parent, parseCompoundListIndex } from "./nbt";
 import { ListPayload, TagData, TagPayload, TagType } from "./types";
 
 export enum NBTActions {
@@ -45,6 +45,7 @@ export function transformTag(tag: TagData, path: string, transform: (tag: TagDat
      * Find the next child. If this is the final tag, the remaining path will be the empty string, in which case
      * the given transform function is called to return the final result.
      */
+    if (path[0] === '/') path = path.slice(1);
     const p = path.split("/");
     if (p.length === 1 && p[0] === "") return transform(tag);
 
