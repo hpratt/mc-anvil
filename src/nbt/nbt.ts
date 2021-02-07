@@ -1,4 +1,4 @@
-import { BinaryParser } from "../util";
+import { ResizableBinaryWriter } from "../util";
 import { inflate } from 'pako';
 import { ListPayload, TagData, TagPayload, TagType } from "./types";
 
@@ -56,10 +56,13 @@ function tryInflate(buffer: ArrayBuffer): ArrayBuffer {
     }
 }
 
-export class NBTParser extends BinaryParser {
+export class NBTParser extends ResizableBinaryWriter {
 
-    constructor(data: ArrayBuffer) {
+    private verbose?: boolean;
+
+    constructor(data: ArrayBuffer, verbose?: boolean) {
         super(tryInflate(data));
+        this.verbose = verbose;
     }
 
     private tagReaders: Map<TagType, () => TagPayload> = new Map([
@@ -78,6 +81,22 @@ export class NBTParser extends BinaryParser {
         [ TagType.LIST, this.getListTag.bind(this) ]
     ]);
 
+    private tagWriters: Map<TagType, (value?: any) => void> = new Map([
+        [ TagType.END, () => {} ],
+        [ TagType.BYTE, this.setByte.bind(this) as (value?: any) => void ],
+        [ TagType.BYTE_ARRAY, this.setByteArrayTag.bind(this) as (value?: any) => void ],
+        [ TagType.SHORT, this.setShort.bind(this) as (value?: any) => void ],
+        [ TagType.INT, this.setInt.bind(this) as (value?: any) => void ],
+        [ TagType.INT_ARRAY, this.setIntArrayTag.bind(this) as (value?: any) => void ],
+        [ TagType.LONG, this.setInt64LE.bind(this) as (value?: any) => void ],
+        [ TagType.LONG_ARRAY, this.setLongArrayTag.bind(this) as (value?: any) => void ],
+        [ TagType.FLOAT, this.setFloat.bind(this) as (value?: any) => void ],
+        [ TagType.DOUBLE, this.setDouble.bind(this) as (value?: any) => void ],
+        [ TagType.STRING, this.setStringTag.bind(this) as (value?: any) => void ],
+        [ TagType.COMPOUND, this.setCompoundTag.bind(this) as (value?: any) => void ],
+        [ TagType.LIST, this.setListTag.bind(this) as (value?: any) => void ]
+    ]);
+
     private getNumberArrayTag(reader: () => number): TagPayload {
         const data: number[] = [];
         const length = this.getInt();
@@ -85,12 +104,25 @@ export class NBTParser extends BinaryParser {
         return data;
     }
 
+    private setNumberArrayTag(value: number[], writer: (value: number) => void) {
+        this.setInt(value.length);
+        value.forEach(writer);
+    }
+
     private getByteArrayTag(): TagPayload {
         return this.getNumberArrayTag(this.getByte.bind(this));
     }
 
+    private setByteArrayTag(value: number[]) {
+        this.setNumberArrayTag(value, this.setByte.bind(this));
+    }
+
     private getIntArrayTag(): TagPayload {
         return this.getNumberArrayTag(this.getInt.bind(this));
+    }
+
+    private setIntArrayTag(value: number[]) {
+        this.setNumberArrayTag(value, this.setInt.bind(this));
     }
 
     private getLongArrayTag(): TagPayload {        
@@ -100,9 +132,19 @@ export class NBTParser extends BinaryParser {
         return r;
     }
 
+    private setLongArrayTag(value: ArrayBuffer) {
+        this.setInt(value.byteLength);
+        this.setArrayBuffer(value);
+    }
+
     private getStringTag(): TagPayload {
         const length = this.getUShort();
         return this.getFixedLengthString(length);
+    }
+
+    private setStringTag(value: string) {
+        this.setUShort(value.length);
+        this.setFixedLengthString(value);
     }
 
     private getListTag(): TagPayload {
@@ -115,6 +157,14 @@ export class NBTParser extends BinaryParser {
         return { subType, data };
     }
 
+    private setListTag(value: { subType: number, data: TagPayload[] }) {
+        const writer = this.tagWriters.get(value.subType);
+        if (writer === undefined) throw new Error(`Invalid NBT tag ID ${value.subType} for list tag`);
+        this.setByte(value.subType);
+        this.setInt(value.data.length);
+        value.data.forEach(writer);
+    }
+
     private getCompoundTag(): TagPayload {
         const tags: TagData[] = [];
         do {
@@ -123,13 +173,27 @@ export class NBTParser extends BinaryParser {
         return tags;
     }
 
+    private setCompoundTag(value: TagData[]) {
+        value.forEach(this.setTag.bind(this));
+    }
+
     getTag() {
+        const p = this.currentPosition();
         const type = this.getByte();
         const nameLength = type !== TagType.END ? this.getUShort() : 0;
         const name = this.getFixedLengthString(nameLength);
         const reader = this.tagReaders.get(type);
         if (reader === undefined) throw new Error(`Invalid NBT tag ID ${type}`);
         return { type, name, data: reader() };
+    }
+
+    setTag(value: TagData) {
+        const writer = this.tagWriters.get(value.type);
+        if (writer === undefined) throw new Error(`Invalid NBT tag ID ${value.type}`);
+        this.setByte(value.type);
+        if (value.type !== TagType.END) this.setUShort(value.name.length);
+        this.setFixedLengthString(value.name);
+        writer(value.data);
     }
 
 }

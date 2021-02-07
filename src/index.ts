@@ -1,4 +1,4 @@
-export { BinaryParser, BitParser } from './util';
+export { BinaryParser, BitParser, ResizableBinaryWriter } from './util';
 export {
     AnvilParser, BlockDataParser, sortedSections, isValidChunkRootTag, isValidChunkSectionTag, indexFromChunkCoordinate, chunkCoordinateFromIndex,
     indexFromBiomeCoordinate, biomeCoordinateFromIndex, findBlocksByName, blockTypeString, blockTypeID, blockStateTensor, worldHeights, biomesAtWorldHeight

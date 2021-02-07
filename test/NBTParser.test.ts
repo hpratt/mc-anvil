@@ -63,6 +63,26 @@ describe("NBTParser", () => {
 		expect(findChildTagAtPath("data/sections", tag)).toBeUndefined();
 	});
 
+	it("should read the root compound tag of raids.dat", async () => {
+		const data = await axios.get("http://localhost:8001/raids.dat", { responseType: 'arraybuffer' });
+		const b = new NBTParser(new Uint8Array(data.data).buffer);
+		const tag = b.getTag();
+		b.seek(0);
+		b.setTag(tag);
+		b.seek(0);
+		expect(b.getTag()).toEqual(tag);
+	});
+
+	it("should read the root compound tag of level.dat", async () => {
+		const data = await axios.get("http://localhost:8001/level.dat", { responseType: 'arraybuffer' });
+		const b = new NBTParser(new Uint8Array(data.data).buffer, true);
+		const tag = b.getTag();
+		b.seek(0);
+		b.setTag(tag);
+		b.seek(0);
+		expect(b.getTag()).toEqual(tag);
+	});
+
 	it("should read level.dat", async () => {
 		const data = await axios.get("http://localhost:8001/level.dat", { responseType: 'arraybuffer' });
 		const b = new NBTParser(new Uint8Array(data.data).buffer);

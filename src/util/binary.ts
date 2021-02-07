@@ -2,24 +2,26 @@ export class BinaryParser {
     
     protected view: DataView;
     protected position: number;
-    protected length: number;
 
-    private _getByte: (byteOffset: number) => number;
-    private _getShort: (byteOffset: number) => number;
-    private _getUShort: (byteOffset: number) => number;
-    private _getInt: (byteOffset: number) => number;
-    private _getUInt: (byteOffset: number) => number;
-    private _getFloat: (byteOffset: number) => number;
-    private _getDouble: (byteOffset: number) => number;
-    private _getInt64: (byteOffset: number) => bigint;
-    private _getUInt64: (byteOffset: number) => bigint;
-    private _getInt64LE: (byteOffset: number) => bigint;
-    private _getUInt64LE: (byteOffset: number) => bigint;
+    private _getByte: (byteOffset: number) => number = () => 0;
+    private _getShort: (byteOffset: number) => number = () => 0;
+    private _getUShort: (byteOffset: number) => number = () => 0;
+    private _getInt: (byteOffset: number) => number = () => 0;
+    private _getUInt: (byteOffset: number) => number = () => 0;
+    private _getFloat: (byteOffset: number) => number = () => 0;
+    private _getDouble: (byteOffset: number) => number = () => 0;
+    private _getInt64: (byteOffset: number) => bigint = () => BigInt(0);
+    private _getUInt64: (byteOffset: number) => bigint = () => BigInt(0);
+    private _getInt64LE: (byteOffset: number) => bigint = () => BigInt(0);
+    private _getUInt64LE: (byteOffset: number) => bigint = () => BigInt(0);
 
     constructor(data: ArrayBuffer) {
         this.view = new DataView(data);
         this.position = 0;
-        this.length = this.view.byteLength;
+        this.bindReaders();
+    }
+
+    protected bindReaders() {
         this._getByte = this.view.getUint8.bind(this.view);
         this._getShort = this.view.getInt16.bind(this.view);
         this._getUShort = this.view.getUint16.bind(this.view);
@@ -42,7 +44,7 @@ export class BinaryParser {
     }
 
     remainingLength() {
-        return this.length - this.position;
+        return this.view.byteLength - this.position;
     }
 
     private getValue(readFunc: (position: number, littleEndian?: boolean) => number, positionIncrement: number) {
