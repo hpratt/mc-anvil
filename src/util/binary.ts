@@ -61,53 +61,111 @@ export class BinaryParser {
         return this.getValue(this._getByte, 1);
     }
 
+    setByte(value: number) {
+        this.view.setUint8(this.position++, value);
+    }
+
     getShort() {
         return this.getValue(this._getShort, 2);
+    }
+
+    setShort(value: number) {
+        this.view.setInt16(this.position, value);
+        this.position += 2;
     }
 
     getUShort() {
         return this.getValue(this._getUShort, 2);
     }
 
+    setUShort(value: number) {
+        this.view.setUint16(this.position, value);
+        this.position += 2;
+    }
+
     getInt() {
         return this.getValue(this._getInt, 4);
+    }
+
+    setInt(value: number) {
+        this.view.setInt32(this.position, value);
+        this.position += 4;
     }
 
     getUInt() {
         return this.getValue(this._getUInt, 4);
     }
 
+    setUInt(value: number) {
+        this.view.setUint32(this.position, value);
+        this.position += 4;
+    }
+
     getFloat() {
         return this.getValue(this._getFloat, 4);
+    }
+
+    setFloat(value: number) {
+        this.view.setFloat32(this.position, value);
+        this.position += 4;
     }
 
     getDouble() {
         return this.getValue(this._getDouble, 8);
     }
 
+    setDouble(value: number) {
+        this.view.setFloat64(this.position, value);
+        this.position += 8;
+    }
+
     getNByteInteger(n: number) {
         const b: Array<number> = [];
-        for (let i = 0; i < n; i++) b[i] = this.view.getUint8(this.position + i);
+        for (let i = 0; i < n; ++i) b[i] = this.view.getUint8(this.position + i);
         let value = 0;
-        for (let i = 0; i < b.length; i++) value = (value * 256) + b[i];
+        for (let i = 0; i < b.length; ++i) value = (value * 256) + b[i];
         this.position += n;
         return value;
+    }
+
+    setNByteInteger(value: number, n: number) {
+        for (let i = n - 1; i >= 0; --i) this.setByte(Math.floor(value / Math.pow(256, i)) % 256);
     }
 
     getUInt64(): bigint {
         return this.getBigValue(this._getUInt64, 8);
     }
 
+    setUInt64(value: bigint) {
+        this.view.setBigUint64(this.position, value);
+        this.position += 8;
+    }
+
     getInt64(): bigint {
         return this.getBigValue(this._getInt64, 8);
+    }
+
+    setInt64(value: bigint) {
+        this.view.setBigInt64(this.position, value);
+        this.position += 8;
     }
 
     getUInt64LE(): bigint {
         return this.getBigValue(this._getUInt64LE, 8);
     }
 
+    setUInt64LE(value: bigint) {
+        this.view.setBigUint64(this.position, value, true);
+        this.position += 8;
+    }
+
     getInt64LE(): bigint {
         return this.getBigValue(this._getInt64LE, 8);
+    }
+
+    setInt64LE(value: bigint) {
+        this.view.setBigUint64(this.position, value, true);
+        this.position += 8;
     }
 
     getString(len?: number) {
@@ -119,6 +177,11 @@ export class BinaryParser {
         return s;
     }
 
+    setString(value: string) {
+        for (let i = 0; i < value.length; ++i) this.setByte(value.charCodeAt(i));
+        this.setByte(0);
+    }
+
     getFixedLengthString(len: number) {
         let s = "";
         for (let i = 0; i < len; i++) {
@@ -126,6 +189,10 @@ export class BinaryParser {
             if (c > 0) s += String.fromCharCode(c);
         }
         return s;
+    }
+
+    setFixedLengthString(value: string) {
+        for (let i = 0; i < value.length; ++i) this.setByte(value.charCodeAt(i));
     }
 
     getFixedLengthTrimmedString(len: number) {

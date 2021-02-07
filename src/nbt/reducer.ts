@@ -1,4 +1,4 @@
-import { baseName, findChildTagAtPath, firstNonExistentSubPath, LIST_INDEX, parent, parseCompoundListIndex } from "./nbt";
+import { baseName, findChildTagAtPath, LIST_INDEX, parent, parseCompoundListIndex } from "./nbt";
 import { ListPayload, TagData, TagPayload, TagType } from "./types";
 
 export enum NBTActions {
