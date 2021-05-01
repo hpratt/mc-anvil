@@ -1,19 +1,24 @@
-import { inflate } from 'pako';
+import { deflate, inflate } from 'pako';
 
-import { BinaryParser } from '../util';
+import { ResizableBinaryWriter } from '../util';
 import { ChunkDataDescriptor, CompressionType, LocationEntry } from './types';
 
 const LOCATION_ENTRIES_PER_FILE = 1024;
 const LOCATION_ENTRY_SIZE = 4;
 const SECTOR_SIZE = 4096;
 
-export class AnvilParser extends BinaryParser {
+export class AnvilParser extends ResizableBinaryWriter {
 
     getLocationEntry(): LocationEntry {
         return {
             offset: this.getNByteInteger(3),
             sectorCount: this.getByte()
         };
+    }
+
+    setLocationEntry(entry: LocationEntry) {
+        this.setNByteInteger(entry.offset, 3);
+        this.setByte(entry.sectorCount);
     }
 
     getLocationEntries(): LocationEntry[] {
@@ -24,6 +29,10 @@ export class AnvilParser extends BinaryParser {
         return r;
     }
 
+    setLocationEntries(entries: LocationEntry[]) {
+        entries.forEach(this.setLocationEntry.bind(this));
+    }
+
     getTimestamps(): number[] {
         this.position = LOCATION_ENTRIES_PER_FILE * LOCATION_ENTRY_SIZE;
         const r: number[] = [];
@@ -32,12 +41,23 @@ export class AnvilParser extends BinaryParser {
         return r;
     }
 
+    setTimestamps(value: number[]) {
+        this.position = LOCATION_ENTRIES_PER_FILE * LOCATION_ENTRY_SIZE;
+        value.forEach(this.setUInt.bind(this));
+    }
+
     getChunkDataDescriptor(offset?: number): ChunkDataDescriptor {
         if (offset !== undefined) this.position = offset;
         return {
             length: this.getUInt(),
             compressionType: this.getByte()
         };
+    }
+
+    setChunkDataDescriptor(value: ChunkDataDescriptor, offset?: number) {
+        if (offset !== undefined) this.position = offset;
+        this.setUInt(value.length);
+        this.setByte(value.compressionType);
     }
 
     getChunkData(offset?: number): ArrayBuffer {

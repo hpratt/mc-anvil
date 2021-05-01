@@ -9,7 +9,6 @@ import { BlockStates, Palette } from "./types";
 
 export function blockTypeString(t: TagData[]): string {
     const name = t.find(x => x.name === "Name")?.data || "";
-    if (name === "") console.log(t);
     const properties = ((t.find(x => x.name === "Properties")?.data || []) as TagData[])
         .filter(x => x.type === TagType.STRING)
         .map(x => `${x.name}:${x.data}`);
@@ -19,6 +18,10 @@ export function blockTypeString(t: TagData[]): string {
 export function blockTypeID(t: TagData[]): number {
     const w = MD5(blockTypeString(t)).words;
     return w[0];
+}
+
+export function paletteNameList(palette: Palette): string[] {
+    return palette.data.data.map(x => (x.find(x => x.name === "Name")?.data || "") as string);
 }
 
 export class BlockDataParser extends BitParser {
@@ -35,7 +38,7 @@ export class BlockDataParser extends BitParser {
         for (let i = 0; i < b.length; ++i) b[i] = d.getUInt64LE();
         super(b.buffer);
         this.palette = palette;
-        this.paletteNames = this.palette.data.data.map(x => (x.find(x => x.name === "Name")?.data || "") as string);
+        this.paletteNames = paletteNameList(this.palette);
         this.blockTypeStringMap = null;
         this.blockTypeIDMap = null;
         this.blockTypeIDToStringMap = null;

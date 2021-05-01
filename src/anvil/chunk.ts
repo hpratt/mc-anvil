@@ -1,7 +1,7 @@
 import { BlockStates, ChunkRootTag, ChunkSectionTag, Coordinate3D, Palette } from './types';
 import { TagData, TagType } from "../nbt";
 import { findChildTagAtPath, findCompoundListChildren } from "../nbt/nbt";
-import { BlockDataParser } from './block';
+import { BlockDataParser, paletteNameList } from './block';
 import { BinaryParser, BitParser } from '../util';
 
 export const AIR = -968583441; // hash of "minecraft:air()"
@@ -31,6 +31,12 @@ export function getCoordinates(tag: TagData): [ number, number ] | undefined {
     const x = findChildTagAtPath("Level/xPos", tag)?.data;
     const z = findChildTagAtPath("Level/zPos", tag)?.data;
     if (x !== undefined && z !== undefined) return [ x as number * 16, z as number * 16 ];
+}
+
+export function uniqueBlockNames(chunkRootTag: TagData): Set<string> {
+    return new Set(
+        sortedSections(chunkRootTag)?.flatMap(x => paletteNameList(x.find(xx => xx.name === "Palette") as Palette)) || []
+    );
 }
 
 export function findBlocksByName(chunkRootTag: TagData, name: string): Coordinate3D[] {

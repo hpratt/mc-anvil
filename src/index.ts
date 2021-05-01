@@ -1,7 +1,8 @@
 export { BinaryParser, BitParser, ResizableBinaryWriter } from './util';
 export {
     AnvilParser, BlockDataParser, sortedSections, isValidChunkRootTag, isValidChunkSectionTag, indexFromChunkCoordinate, chunkCoordinateFromIndex,
-    indexFromBiomeCoordinate, biomeCoordinateFromIndex, findBlocksByName, blockTypeString, blockTypeID, blockStateTensor, worldHeights, biomesAtWorldHeight
+    indexFromBiomeCoordinate, biomeCoordinateFromIndex, findBlocksByName, blockTypeString, blockTypeID, blockStateTensor, worldHeights, biomesAtWorldHeight,
+    uniqueBlockNames
 } from './anvil';
 export type { ChunkDataDescriptor, CompressionType, LocationEntry, Palette, BlockStates, ChunkRootTag, ChunkSectionTag } from './anvil';
 export { NBTParser, TagType, findChildTag, findChildTagAtPath, findCompoundListChildren, nbtTagReducer, NBTActions } from './nbt';
