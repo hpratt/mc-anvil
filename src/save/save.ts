@@ -142,6 +142,16 @@ export class SaveParser {
     }
 
     /**
+     * Fetches a block from the specified coordinates within this world. If the region containing the coordinate does
+     * not exist within this world (i.e. it has not yet been rendered), undefined will be returned.
+     * @param coordinates the coordinates from which to fetch the block.
+     * @returns object containing the name and key-value properties of the block if the region is present; undefined otherwise.
+     */
+    async getBlock(coordinates: Coordinate3D) {
+        return (await this.getAnvilParserByCoordinate(coordinates))?.getBlock(coordinates);
+    }
+
+    /**
      * Writes this file, with any updates to regions and chunks reflected, to an in-memory ZIP file for download.
      */
     async asZip(): Promise<JSZip> {
