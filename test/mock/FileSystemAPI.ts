@@ -125,6 +125,4 @@ export class MockFile implements File {
         return new ReadableStream();
     }
 
-
-
 }
