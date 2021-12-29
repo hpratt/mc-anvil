@@ -3,6 +3,11 @@ import { BinaryParser, BitParser, findChildTagAtPath, findCompoundListChildren, 
 import { paletteNameList, paletteBlockList, paletteAsList } from "../block";
 import { Coordinate3D } from "../types";
 
+export function mod(n: number, m: number) {
+    if (n < 0) return ((n % m) + m) % m;
+    return n % m;
+}
+
 export function chunkCoordinateFromIndex(index: number): Coordinate3D {
     return [
         index % 16,
@@ -187,7 +192,7 @@ export class Chunk {
     getBlock(coordinates: Coordinate3D): { name: string, properties: { [key: string]: string } } {
         const yIndex = coordinates[1] >= 0 ? Math.floor(coordinates[1] / 16) : Math.floor((coordinates[1] + 4096) / 16);
         const [ s, palette ] = this.sectionBlockStateTensor(yIndex);
-        const i = s[coordinates[0] % 16][(coordinates[1] + 64) % 16][coordinates[2] % 16];
+        const i = s[mod(coordinates[0], 16)][(coordinates[1] + 64) % 16][mod(coordinates[2], 16)];
         return (palette ? paletteAsList(palette) : [])[i];
     }
 
@@ -204,7 +209,7 @@ export class Chunk {
         const nameOrder = palette ? paletteBlockList(palette) : [];
         const i = nameOrder.findIndex(x => x === fullName);
         const index = i !== -1 ? nameOrder.findIndex(x => x === fullName)! : nameOrder.length;
-        s[coordinates[0] % 16][(coordinates[1] + 64) % 16][coordinates[2] % 16] = index;
+        s[mod(coordinates[0], 16)][(coordinates[1] + 64) % 16][mod(coordinates[2], 16)] = index;
         if (i === -1) this.palettes.set(yIndex, nbtTagReducer(palette || { type: TagType.LIST, name: "palette", data: { subType: TagType.COMPOUND, data: [] } }, {
             type: NBTActions.NBT_ADD_COMPOUND_LIST_ITEM,
             path: "",

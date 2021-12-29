@@ -33,8 +33,8 @@ describe("AnvilParser", () => {
 	it("should read chunk location entries and timestamps", async () => {
 		const data = await axios.get("http://localhost:8001/r.-1.-1.mca", { responseType: 'arraybuffer' });
 		const b = new AnvilParser(new Uint8Array(data.data).buffer);
-		expect(b.getLocationEntries().filter(x => x.offset !== 0).length).toBe(20);
-		expect(b.getTimestamps().filter(x => x > 0).length).toBe(20);
+		expect(b.getLocationEntries().filter(x => x.offset !== 0).length).toBe(322);
+		expect(b.getTimestamps().filter(x => x > 0).length).toBe(322);
 	});
 
 	it("should read chunk data", async () => {
@@ -75,6 +75,14 @@ describe("AnvilParser", () => {
 		expect(tt.findBlocksByName("minecraft:gold_block")).toEqual([[ 518, -64, 512 ]]);
 		expect(tt.getBlock([ 516, 200, 518 ])).toEqual({ name: "minecraft:torch", properties: { facing: "north" } });
 		expect(tt.findBlocksByName("minecraft:iron_block")).toEqual([]);
+	});
+
+	it("should set blocks in a chunk with negative coordinates", async () => {
+		const data = await axios.get("http://localhost:8001/r.-1.-1.mca", { responseType: 'arraybuffer' });
+		const b = new AnvilParser(new Uint8Array(data.data).buffer);
+		expect(b.getBlock([ -10, 100, -10 ]).name).toEqual("minecraft:air");
+		b.setBlock([ -10, 100, -10 ], "minecraft:diamond_ore", {});
+		expect(b.getBlock([ -10, 100, -10 ]).name).toEqual("minecraft:diamond_ore");
 	});
 
 	it("should set blocks in a region", async () => {

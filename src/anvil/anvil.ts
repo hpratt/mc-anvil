@@ -3,6 +3,7 @@ import { Chunk } from '.';
 import { NBTParser } from '..';
 
 import { ResizableBinaryWriter } from '../util';
+import { mod } from './chunk/chunk';
 import { ChunkDataDescriptor, CompressionType, Coordinate3D, LocationEntry } from './types';
 
 const LOCATION_ENTRIES_PER_FILE = 1024;
@@ -25,7 +26,7 @@ export class AnvilParser extends ResizableBinaryWriter {
      * @returns the offset of the chunk descriptor in bytes from the Anvil blob's start.
      */
     static chunkOffset(x: number, z: number): number {
-        return 4 * ((x & 31) + (z & 31) * 32);
+        return 4 * (mod(x, 32) + mod(z, 32) * 32);
     }
 
     /**
@@ -106,7 +107,7 @@ export class AnvilParser extends ResizableBinaryWriter {
      * @returns the chunk's data if it is present; undefined if not.
      */
     getChunkContainingCoordinate(c: Coordinate3D): Chunk | undefined {
-        return this.getValidMatchingChunkAtOffset(AnvilParser.chunkOffset(Math.floor(c[0]) / 16, Math.floor(c[2]) / 16), chunk => (
+        return this.getValidMatchingChunkAtOffset(AnvilParser.chunkOffset(Math.floor(c[0] / 16), Math.floor(c[2] / 16)), chunk => (
             chunk.containsCoordinate(c)
         ));
     }
