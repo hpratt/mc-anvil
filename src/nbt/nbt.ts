@@ -133,7 +133,7 @@ export class NBTParser extends ResizableBinaryWriter {
     }
 
     private setLongArrayTag(value: ArrayBuffer) {
-        this.setInt(value.byteLength);
+        this.setInt(value.byteLength / 8);
         this.setArrayBuffer(value);
     }
 
@@ -175,10 +175,10 @@ export class NBTParser extends ResizableBinaryWriter {
 
     private setCompoundTag(value: TagData[]) {
         value.forEach(this.setTag.bind(this));
+        if (value[value.length - 1]?.type !== TagType.END) this.setTag({ type: TagType.END, name: "", data: null });
     }
 
     getTag() {
-        const p = this.currentPosition();
         const type = this.getByte();
         const nameLength = type !== TagType.END ? this.getUShort() : 0;
         const name = this.getFixedLengthString(nameLength);

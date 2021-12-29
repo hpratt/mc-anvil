@@ -4,15 +4,25 @@ import { associateBy } from 'queryz';
 import { TagData, TagType } from "../nbt";
 import { findCompoundListChildren } from "../nbt/nbt";
 import { BinaryParser, BitParser } from "../util";
-import { BLOCKS_PER_CHUNK } from './chunk';
+import { Chunk } from './chunk';
 import { BlockStates, Palette } from "./types";
 
 export function blockTypeString(t: TagData[]): string {
-    const name = t.find(x => x.name === "Name")?.data || "";
-    const properties = ((t.find(x => x.name === "Properties")?.data || []) as TagData[])
+    const name = t.find(x => x.name.toLowerCase() === "name")?.data || "";
+    const properties = ((t.find(x => x.name.toLowerCase() === "properties")?.data || []) as TagData[])
         .filter(x => x.type === TagType.STRING)
+        .sort( (a, b) => a.name.localeCompare(b.name) )
         .map(x => `${x.name}:${x.data}`);
     return `${name}(${properties.join(",")})`;
+}
+
+export function block(t: TagData[]): { name: string, properties: { [key: string]: string } } {
+    const name = t.find(x => x.name.toLowerCase() === "name")?.data as string || "";
+    const properties: { [key: string]: string } = {};
+    ((t.find(x => x.name.toLowerCase() === "properties")?.data || []) as TagData[])
+        .filter(x => x.type === TagType.STRING)
+        .forEach(x => { properties[x.name] = x.data as string; });
+    return { name, properties };
 }
 
 export function blockTypeID(t: TagData[]): number {
@@ -21,9 +31,20 @@ export function blockTypeID(t: TagData[]): number {
 }
 
 export function paletteNameList(palette: Palette): string[] {
-    return palette.data.data.map(x => (x.find(x => x.name === "Name")?.data || "") as string);
+    return palette.data.data.map(x => (x.find(x => x.name.toLowerCase() === "name")?.data || "") as string);
 }
 
+export function paletteAsList(palette: Palette): { name: string, properties: { [key: string]: string } }[] {
+    return palette.data.data.map(block);
+}
+
+export function paletteBlockList(palette: Palette): string[] {
+    return palette.data.data.map(blockTypeString);
+}
+
+/**
+ * Provides bitwise parsing and writing for the UInt64 array encoding block states within chunk sections.
+ */
 export class BlockDataParser extends BitParser {
 
     private palette: Palette;
@@ -32,6 +53,33 @@ export class BlockDataParser extends BitParser {
     private blockTypeIDToStringMap: Map<number, string> | null;
     private paletteNames: string[];
 
+    /**
+     * Encodes a list of block states for a section and writes them to a blob.
+     * @param states the list of block states to write, corresponding to indexes in the corresponding palette.
+     * @returns an ArrayBuffer containing the data which can be inserted into a long array NBT tag.
+     */
+    static writeBlockStates(states: number[]): ArrayBuffer {
+        const l = Math.floor(Math.log2(Math.max(...states))) + 1;
+        const length = l < 4 ? 4 : l;
+        const c = Math.floor(64 / length);
+        const toSkip = 64 % c;
+        const r = new ArrayBuffer(8 * states.length / c);
+        const d = new BitParser(r);
+        for (let i = 0; i < states.length; ++i) {
+            if (c > 0 && c < Infinity && i % c === 0) d.setBits(toSkip, 0);
+            d.setBits(length, states[i]);
+        }
+        const br = new BinaryParser(r);
+        const bw = new BinaryParser(r);
+        for (let i = 0; i < states.length / c; ++i) bw.setUInt64LE(br.getUInt64LE());
+        return r;
+    }
+
+    /**
+     * Constructs a parser for a section given its block state data and palette.
+     * @param blockStates an NBT tag containing the block state data; typically found at block_states/data for a section.
+     * @param palette an NBT tag containing the palette; typically found at block_states/palette for a section.
+     */
     constructor(blockStates: BlockStates, palette: Palette) {
         const d = new BinaryParser(blockStates.data as ArrayBuffer);
         const b = new BigUint64Array(d.remainingLength() / 8);
@@ -44,22 +92,36 @@ export class BlockDataParser extends BitParser {
         this.blockTypeIDToStringMap = null;
     }
 
+    /**
+     * Fetches block indexes stored in original format (prior to snapshot 20w17a) in which individual blocks may be
+     * spread across multiple unsigned longs. Each index corresponds to an index in the section's palette.
+     * @param f transform function to apply to each fetched index.
+     * @param limit maximum number of blocks to retrieve; if not passed, all will be retrieved.
+     * @returns list of transformed block indexes.
+     */
     private getBlocksGenericOriginal<T>(f: (n: number) => T, limit?: number) {
         const paletteSize = this.palette.data.data.length;
         const toRead = paletteSize ? Math.ceil(Math.log2(paletteSize)) : 0;
-        const total = limit || BLOCKS_PER_CHUNK;
+        const total = limit || Chunk.BLOCKS_PER_CHUNK;
         const r: T[] = [];
         for (let i = 0; i < total; ++i) r.push(f(this.getBits(toRead)));
         return r;
     }
 
+    /**
+     * Fetches block indexes stored in current format (after snapshot 20w17a) in which individual blocks are not
+     * spread across multiple unsigned longs. Each index corresponds to an index in the section's palette.
+     * @param f transform function to apply to each fetched index.
+     * @param limit maximum number of blocks to retrieve; if not passed, all will be retrieved.
+     * @returns list of transformed block indexes.
+     */
     private getBlocksGeneric<T>(f: (n: number) => T, limit?: number) {
         const paletteSize = this.palette.data.data.length;
         const toRead = paletteSize ? Math.ceil(Math.log2(paletteSize)) : 0;
         const r: T[] = [];
         const skipIndex = Math.floor(64 / toRead);
         const toSkip = 64 % toRead;
-        const total = limit || BLOCKS_PER_CHUNK;
+        const total = limit || Chunk.BLOCKS_PER_CHUNK;
         for (let i = 0; i < total; ++i) {
             if (skipIndex > 0 && skipIndex < Infinity && i % skipIndex === 0) this.getBits(toSkip);
             r.push(f(this.getBits(toRead)));
@@ -68,11 +130,11 @@ export class BlockDataParser extends BitParser {
     }
 
     private getBlockTypeIDMap() {
-        this.blockTypeIDMap = associateBy(this.palette.data.data, x => (x.find(x => x.name === "Name")?.data || "") as string, blockTypeID);
+        this.blockTypeIDMap = associateBy(this.palette.data.data, x => (x.find(x => x.name.toLowerCase() === "name")?.data || "") as string, blockTypeID);
     }
 
     private getBlockTypeStringMap() {
-        this.blockTypeStringMap = associateBy(this.palette.data.data, x => (x.find(x => x.name === "Name")?.data || "") as string, blockTypeString);
+        this.blockTypeStringMap = associateBy(this.palette.data.data, x => (x.find(x => x.name.toLowerCase() === "name")?.data || "") as string, blockTypeString);
     }
 
     private getBlockTypeIDToStringMap() {
@@ -83,18 +145,42 @@ export class BlockDataParser extends BitParser {
         );
     }
 
+    /**
+     * Fetches block indexes from the section, with each index corresponding to an index in the section's palette.
+     * The original parameter may be used to specify whether the section was generated prior to snapshot 20w17a, in
+     * which case the bitwise format encoding the blocks differs.
+     * @param original if set, specifies that the section was generated prior to snapshot 20w17a.
+     * @param limit maximum number of blocks to retrieve; if not passed, all will be retrieved.
+     * @returns list of block indexes.
+     */
+    getRawBlocks(original?: boolean, limit?: number) {
+        return original
+            ? this.getBlocksGenericOriginal(x => x, limit)
+            : this.getBlocksGeneric(x => x, limit);
+    }
+
+    /**
+     * Fetches block NBT tags from the palette corresponding to the blocks in this section. The original parameter may
+     * be used to specify whether the section was generated prior to snapshot 20w17a, in which case the bitwise format
+     * encoding the blocks differs.
+     * @param original if set, specifies that the section was generated prior to snapshot 20w17a.
+     * @param limit maximum number of blocks to retrieve; if not passed, all will be retrieved.
+     * @returns list of block NBT tags.
+     */
     getBlocks(original?: boolean, limit?: number) {
         return original
             ? this.getBlocksGenericOriginal(x => this.palette.data.data[x], limit)
             : this.getBlocksGeneric(x => this.palette.data.data[x], limit);
     }
 
-    getBlockIDs(original?: boolean, limit?: number) {
-        return original
-            ? this.getBlocksGenericOriginal(x => x, limit)
-            : this.getBlocksGeneric(x => x, limit);
-    }
-
+    /**
+     * Fetches block names from the palette corresponding to the blocks in this section. The original parameter may
+     * be used to specify whether the section was generated prior to snapshot 20w17a, in which case the bitwise format
+     * encoding the blocks differs.
+     * @param original if set, specifies that the section was generated prior to snapshot 20w17a.
+     * @param limit maximum number of blocks to retrieve; if not passed, all will be retrieved.
+     * @returns list of block names.
+     */
     getBlockTypeNames(original?: boolean, limit?: number) {
         if (this.blockTypeStringMap === null) this.getBlockTypeStringMap();
         return original
@@ -114,9 +200,14 @@ export class BlockDataParser extends BitParser {
         return this.blockTypeIDToStringMap?.get(hash) || "";
     }
 
+    /**
+     * Searches the chunk for the block with the given name; returns its locations.
+     * @param name the name of the block to locate.
+     * @returns a list of block coordinate locations where this block occurs in the chunk.
+     */
     findBlocksByName(name: string): number[] {
-        const blocks = this.getBlockIDs();
-        const nameIndex = findCompoundListChildren(this.palette, x => x.name === "Name")
+        const blocks = this.getRawBlocks();
+        const nameIndex = findCompoundListChildren(this.palette, x => x.name.toLowerCase() === "name")
             ?.map((x, i) => ({ x, i }))
             .find(x => x.x?.data === name)
             ?.i;

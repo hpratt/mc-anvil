@@ -47,4 +47,21 @@ describe("BitParser", () => {
 		expect(b.currentPosition()).toBe(4);
 	});
 
+	it("should write bits and read them back", async () => {
+		const b = new BitParser(testArrayBuffer());
+		b.setBits(3, 3);
+		b.setBits(3, 2);
+		b.setBits(12, 1385);
+		b.setBits(7, 88);
+		b.setBits(7, 112);
+		b.setBits(18, 229376);
+		b.seek(0);
+		expect(b.getBits(3)).toBe(3);
+		expect(b.getBits(3)).toBe(2);
+		expect(b.getBits(12)).toBe(1385);
+		expect(b.getBits(7)).toBe(88);
+		expect(b.getBits(7)).toBe(112);
+		expect(b.getBits(18)).toBe(229376);
+	});
+
 });

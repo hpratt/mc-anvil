@@ -21,6 +21,10 @@ export class BinaryParser {
         this.bindReaders();
     }
 
+    buffer(): ArrayBuffer {
+        return this.view.buffer;
+    }
+
     protected bindReaders() {
         this._getByte = this.view.getUint8.bind(this.view);
         this._getShort = this.view.getInt16.bind(this.view);

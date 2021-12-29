@@ -18,6 +18,10 @@ export class BitParser {
     protected position: number;
     protected length: number;
 
+    static inverseMask(start: number, n: number): number {
+        return 0xFF - ((MASK.get(n)! << (8 - start - n)) % 0xFF);
+    }
+
     constructor(data: ArrayBuffer) {
         this.view = new DataView(data);
         this.position = 0;
@@ -57,6 +61,28 @@ export class BitParser {
 
         return r;
 
+    }
+
+    setBits(n: number, value: number) {
+        let needed = n;
+        if (n > 8 - this.partialCount) {
+            const x = 8 - this.partialCount;
+            const l = this.view.getUint8(this.position) & (MASK.get(this.partialCount)! << x);
+            this.view.setUint8(this.position++, l + (value >> (n - x)));
+            this.partialCount = 0;
+            needed -= x;
+        }
+        const sm = needed % 8;
+        for (let i = Math.floor(needed / 8) - 1; i >= 0; --i)
+            this.view.setUint8(this.position++, (value >> (sm + (8 * i))) % 256);
+        const existing = this.view.getUint8(this.position) & BitParser.inverseMask(this.partialCount, sm);
+        this.view.setUint8(this.position, existing + ((value & MASK.get(sm)!) << (8 - sm - this.partialCount)));
+        this.partialCount += sm;
+    }
+
+    seek(position: number, partialCount?: number) {
+        this.position = position;
+        this.partialCount = partialCount || 0;
     }
 
 }

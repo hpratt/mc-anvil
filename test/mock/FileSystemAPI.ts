@@ -66,12 +66,14 @@ export class MockFileEntry implements FileEntry {
     public isDirectory: boolean = false;
     public fullPath: string;
     public filesystem: FileSystem;
+    private data?: File;
 
-    constructor(name: string, parent: MockDirectoryEntry) {
+    constructor(name: string, parent: MockDirectoryEntry, data?: File) {
         this.name = name;
         this.parent = parent;
         this.fullPath = parent.fullPath + name;
         this.filesystem = parent.filesystem;
+        this.data = data;
         parent.addChild(this);
     }
 
@@ -86,6 +88,43 @@ export class MockFileEntry implements FileEntry {
         return this.parent;
     }
 
-    file() {}
+    file(successCallback: FileCallback, errorCallback?: ErrorCallback): void {
+        successCallback(this.data!);
+    }
+
+}
+
+export class MockFile implements File {
+
+    lastModified: number = 0;
+    webkitRelativePath: string = "";
+    name: string;
+    size: number;
+    type: string = "";
+    private buffer: ArrayBuffer;
+
+    constructor(data: ArrayBuffer, name: string) {
+        this.buffer = data;
+        this.name = name;
+        this.size = data.byteLength;
+    }
+
+    async arrayBuffer(): Promise<ArrayBuffer> {
+        return this.buffer;
+    }
+
+    slice(start?: number, end?: number, contentType?: string): Blob {
+        return new Blob([ this.buffer.slice(start || 0, end) ]);
+    }
+
+    async text(): Promise<string> {
+        return "";
+    }
+    
+    stream() {
+        return new ReadableStream();
+    }
+
+
 
 }
