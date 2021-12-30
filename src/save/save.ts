@@ -121,12 +121,14 @@ export class SaveParser {
         const z = region.z;
 
         /* get and cache the anvil parser for the region */
-        const parser = await new Promise<AnvilParser>((resolve, reject) => {
+        return new Promise<AnvilParser>((resolve, reject) => {
             if (this.dirtyRegions.get(`${x},${z}`)) resolve(this.dirtyRegions.get(`${x},${z}`)!);
-            region.file.file(f => f.arrayBuffer().then(x => resolve(new AnvilParser(x))).catch(reject));
+            region.file.file(f => f.arrayBuffer().then(xx => {
+                const parser = new AnvilParser(xx);
+                this.dirtyRegions.set(`${x},${z}`, parser);
+                resolve(parser);
+            }).catch(reject), reject);
         });
-        this.dirtyRegions.set(`${x},${z}`, parser);
-        return parser;
 
     }
 
