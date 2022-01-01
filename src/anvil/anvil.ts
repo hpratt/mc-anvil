@@ -270,7 +270,7 @@ export class AnvilParser extends ResizableBinaryWriter {
 
             /* write to the Anvil buffer */
             this.setInt(data.byteLength + 1);
-            this.setByte(CompressionType.GZIP);
+            this.setByte(CompressionType.ZLIB);
             this.setArrayBuffer(data);
             if (length * SECTOR_SIZE - data.byteLength - 5 > 0) this.setArrayBuffer(new ArrayBuffer(length * SECTOR_SIZE - data.byteLength - 5));
 
