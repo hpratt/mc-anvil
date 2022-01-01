@@ -59,19 +59,24 @@ export class BlockDataParser extends BitParser {
      * @returns an ArrayBuffer containing the data which can be inserted into a long array NBT tag.
      */
     static writeBlockStates(states: number[]): ArrayBuffer {
-        const l = Math.floor(Math.log2(Math.max(...states))) + 1;
+        const l = Math.floor(Math.log2((Math.max(...states) + 1) || 1)) + 1;
         const length = l < 4 ? 4 : l;
         const c = Math.floor(64 / length);
         const toSkip = 64 % c;
-        const r = new ArrayBuffer(8 * states.length / c);
+        const r = new ArrayBuffer(8 * Math.ceil(states.length / c));
         const d = new BitParser(r);
+        let workingList: number[] = [];
         for (let i = 0; i < states.length; ++i) {
-            if (c > 0 && c < Infinity && i % c === 0) d.setBits(toSkip, 0);
-            d.setBits(length, states[i]);
+            if (c > 0 && c < Infinity && i % c === 0) {
+                if (workingList.length > 0) d.setBits(toSkip, 0);
+                for (let i = workingList.length - 1; i >= 0; --i) d.setBits(length, workingList[i]);
+                workingList = [];
+            }
+            workingList.push(states[i]);
         }
-        const br = new BinaryParser(r);
-        const bw = new BinaryParser(r);
-        for (let i = 0; i < states.length / c; ++i) bw.setUInt64LE(br.getUInt64LE());
+        if (workingList.length > 0) d.setBits(toSkip, 0);
+        for (let i = 0; i < c - workingList.length; ++i) d.setBits(length, 0);
+        for (let i = workingList.length - 1; i >= 0; --i) d.setBits(length, workingList[i]);
         return r;
     }
 
@@ -117,15 +122,23 @@ export class BlockDataParser extends BitParser {
      */
     private getBlocksGeneric<T>(f: (n: number) => T, limit?: number) {
         const paletteSize = this.palette.data.data.length;
-        const toRead = paletteSize ? Math.ceil(Math.log2(paletteSize)) : 0;
+        const l = Math.floor(Math.log2(paletteSize || 1)) + 1;
+        const toRead = paletteSize ? (l < 4 ? 4 : l) : 0;
         const r: T[] = [];
         const skipIndex = Math.floor(64 / toRead);
         const toSkip = 64 % toRead;
-        const total = limit || Chunk.BLOCKS_PER_CHUNK;
+        const total = limit || (this.view.byteLength / 8 * skipIndex);
+        let workingList: number[] = [];
         for (let i = 0; i < total; ++i) {
-            if (skipIndex > 0 && skipIndex < Infinity && i % skipIndex === 0) this.getBits(toSkip);
-            r.push(f(this.getBits(toRead)));
+            if (skipIndex > 0 && skipIndex < Infinity && i % skipIndex === 0) {
+                this.getBits(toSkip);
+                for (let i = workingList.length - 1; i >= 0; --i) r.push(f(workingList[i]));
+                workingList = [];
+            }
+            workingList.push(this.getBits(toRead));
         }
+        for (let i = workingList.length - 1; i >= 0; --i) r.push(f(workingList[i]));
+        if (total > Chunk.BLOCKS_PER_CHUNK) return r.slice(0, Chunk.BLOCKS_PER_CHUNK);
         return r;
     }
 

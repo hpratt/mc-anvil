@@ -67,7 +67,7 @@ export class BitParser {
         let needed = n;
         if (n > 8 - this.partialCount) {
             const x = 8 - this.partialCount;
-            const l = this.view.getUint8(this.position) & (MASK.get(this.partialCount)! << x);
+            const l = this.view.getUint8(this.position) & (MASK.get(this.partialCount)! << (8 - this.partialCount));
             this.view.setUint8(this.position++, l + (value >> (n - x)));
             this.partialCount = 0;
             needed -= x;
@@ -75,7 +75,7 @@ export class BitParser {
         const sm = needed % 8;
         for (let i = Math.floor(needed / 8) - 1; i >= 0; --i)
             this.view.setUint8(this.position++, (value >> (sm + (8 * i))) % 256);
-        const existing = this.view.getUint8(this.position) & BitParser.inverseMask(this.partialCount, sm);
+        const existing = this.view.getUint8(this.position) & (MASK.get(this.partialCount)! << (8 - this.partialCount));
         this.view.setUint8(this.position, existing + ((value & MASK.get(sm)!) << (8 - sm - this.partialCount)));
         this.partialCount += sm;
     }

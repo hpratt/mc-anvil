@@ -11,9 +11,7 @@ export class BinaryParser {
     private _getFloat: (byteOffset: number) => number = () => 0;
     private _getDouble: (byteOffset: number) => number = () => 0;
     private _getInt64: (byteOffset: number) => bigint = () => BigInt(0);
-    private _getUInt64: (byteOffset: number) => bigint = () => BigInt(0);
     private _getInt64LE: (byteOffset: number) => bigint = () => BigInt(0);
-    private _getUInt64LE: (byteOffset: number) => bigint = () => BigInt(0);
 
     constructor(data: ArrayBuffer) {
         this.view = new DataView(data);
@@ -34,9 +32,7 @@ export class BinaryParser {
         this._getFloat = this.view.getFloat32.bind(this.view);
         this._getDouble = this.view.getFloat64.bind(this.view);
         this._getInt64 = (byteOffset: number) => this.view.getBigInt64(byteOffset, true);
-        this._getUInt64 = (byteOffset: number) => this.view.getBigUint64(byteOffset, true);
         this._getInt64LE = (byteOffset: number) => this.view.getBigInt64(byteOffset);
-        this._getUInt64LE = (byteOffset: number) => this.view.getBigUint64(byteOffset);
     }
 
     seek(position: number) {
@@ -139,7 +135,9 @@ export class BinaryParser {
     }
 
     getUInt64(): bigint {
-        return this.getBigValue(this._getUInt64, 8);
+        const v = this.view.getBigUint64(this.position);
+        this.position += 8;
+        return v;
     }
 
     setUInt64(value: bigint) {
@@ -157,7 +155,9 @@ export class BinaryParser {
     }
 
     getUInt64LE(): bigint {
-        return this.getBigValue(this._getUInt64LE, 8);
+        const v = this.view.getBigUint64(this.position, true);
+        this.position += 8;
+        return v;
     }
 
     setUInt64LE(value: bigint) {

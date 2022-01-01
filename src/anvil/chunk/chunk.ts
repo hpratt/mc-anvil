@@ -78,7 +78,7 @@ export class Chunk {
      * @param z the total number of z-coordinates to represnt.
      * @returns a zero-filled 2D array.
      */
-    static emptyX(y: number = 256, z: number = 16): number[][] {
+    static emptyX(y: number = 16, z: number = 16): number[][] {
         const r: number[][] = [];
         for (let i = 0; i < y; ++i) {
             const c = [];
@@ -170,7 +170,7 @@ export class Chunk {
         this.chunkData();
         const sections = this.sortedSections();
         if (sections === undefined) return [];
-        return sections.flatMap( (section, y) => {
+        return sections.flatMap( section => {
             let yy = (section.find(x => x.name === "Y")?.data || 0) as number * 16;
             if (yy >= 4032) yy -= 4096;
             const [ xx, zz ] = this.getCoordinates() || [ 0, 0 ];
@@ -258,7 +258,7 @@ export class Chunk {
         /* initialize bitwise parser for the height map tag */
         const d = new BinaryParser(map.data as ArrayBuffer);
         const b = new BigUint64Array(d.remainingLength() / 8);
-        for (let i = 0; i < b.length; ++i) b[i] = d.getUInt64();
+        for (let i = 0; i < b.length; ++i) b[i] = d.getUInt64LE();
         const p = new BitParser(b.buffer);
     
         /* loop the tag extracting height values */
