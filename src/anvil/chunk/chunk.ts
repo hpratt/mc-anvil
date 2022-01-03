@@ -208,7 +208,7 @@ export class Chunk {
         const [ s, palette ] = this.sectionBlockStateTensor(yIndex);
         const nameOrder = palette ? paletteBlockList(palette) : [];
         const i = nameOrder.findIndex(x => x === fullName);
-        const index = i !== -1 ? nameOrder.findIndex(x => x === fullName)! : nameOrder.length;
+        const index = i !== -1 ? i : nameOrder.length;
         s[mod(coordinates[0], 16)][(coordinates[1] + 64) % 16][mod(coordinates[2], 16)] = index;
         if (i === -1) this.palettes.set(yIndex, nbtTagReducer(palette || { type: TagType.LIST, name: "palette", data: { subType: TagType.COMPOUND, data: [] } }, {
             type: NBTActions.NBT_ADD_COMPOUND_LIST_ITEM,
@@ -344,7 +344,7 @@ export class Chunk {
                         blocks.push(this.blockStates.get(yy)![x][y][z]);
 
             /* write out updated blocks and palette for this section */
-            const r = BlockDataParser.writeBlockStates(blocks);
+            const r = BlockDataParser.writeBlockStates(blocks, this.palettes.get(yy)!.data.data.length);
             const index = sections.findIndex(x => x.find(xx => xx.name === "Y")?.data === yy);
             this.root = nbtTagReducer(this.root, {
                 type: NBTActions.NBT_ADD_TAG,

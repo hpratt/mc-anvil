@@ -58,8 +58,8 @@ export class BlockDataParser extends BitParser {
      * @param states the list of block states to write, corresponding to indexes in the corresponding palette.
      * @returns an ArrayBuffer containing the data which can be inserted into a long array NBT tag.
      */
-    static writeBlockStates(states: number[]): ArrayBuffer {
-        const l = Math.floor(Math.log2(Math.max(...states) || 1)) + 1;
+    static writeBlockStates(states: number[], paletteLength?: number): ArrayBuffer {
+        const l = Math.floor(Math.log2((paletteLength === undefined ? Math.max(...states) : paletteLength) || 1)) + 1;
         const length = l < 4 ? 4 : l;
         const c = Math.floor(64 / length);
         const toSkip = 64 % c;
