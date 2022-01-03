@@ -59,7 +59,7 @@ export class BlockDataParser extends BitParser {
      * @returns an ArrayBuffer containing the data which can be inserted into a long array NBT tag.
      */
     static writeBlockStates(states: number[]): ArrayBuffer {
-        const l = Math.floor(Math.log2((Math.max(...states) + 1) || 1)) + 1;
+        const l = Math.floor(Math.log2(Math.max(...states) || 1)) + 1;
         const length = l < 4 ? 4 : l;
         const c = Math.floor(64 / length);
         const toSkip = 64 % c;
@@ -122,7 +122,7 @@ export class BlockDataParser extends BitParser {
      */
     private getBlocksGeneric<T>(f: (n: number) => T, limit?: number) {
         const paletteSize = this.palette.data.data.length;
-        const l = Math.floor(Math.log2(paletteSize || 1)) + 1;
+        const l = Math.floor(Math.log2((paletteSize - 1) || 1)) + 1;
         const toRead = paletteSize ? (l < 4 ? 4 : l) : 0;
         const r: T[] = [];
         const skipIndex = Math.floor(64 / toRead);
