@@ -379,11 +379,11 @@ export class Chunk {
                     name: 'data',
                     data: r
                 }
-            }) : nbtTagReducer(this.root, {
+            }) : ( findChildTagAtPath(`sections/${index}/block_states/data`, this.root) ? nbtTagReducer(this.root, {
                 type: NBTActions.NBT_DELETE_TAG,
                 recursive: true,
                 path: `sections/${index}/block_states/data`
-            }); // updates block state data or deletes it if the palette is a single item
+            }) : this.root ); // updates block state data or deletes it if the palette is a single item
             this.palettes.set(yy, palette);
             this.blockStates.delete(yy);
             this.root = nbtTagReducer(this.root, {
