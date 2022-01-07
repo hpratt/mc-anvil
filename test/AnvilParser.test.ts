@@ -1,8 +1,7 @@
 import axios from "axios";
 
 import { AnvilParser, chunkCoordinateFromIndex, indexFromChunkCoordinate, indexFromBiomeCoordinate, biomeCoordinateFromIndex, NBTParser, Chunk, findChildTagAtPath, BlockDataParser } from "../src";
-import { CompressionType, LocationEntry } from "../src/anvil/types";
-import { TagType } from "../src/nbt/types";
+import { CompressionType } from "../src/anvil/types";
 
 function testArrayBuffer() {
 	const a = new Uint8Array(5);

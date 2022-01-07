@@ -58,8 +58,24 @@ export class BlockDataParser extends BitParser {
      * @param states the list of block states to write, corresponding to indexes in the corresponding palette.
      * @returns an ArrayBuffer containing the data which can be inserted into a long array NBT tag.
      */
-    static writeBlockStates(states: number[], paletteLength?: number): ArrayBuffer {
-        const l = Math.floor(Math.log2((paletteLength === undefined ? Math.max(...states) : paletteLength) || 1)) + 1;
+    static writeBlockStates(states: number[], palette?: Palette): [ ArrayBuffer, Palette | undefined ] {
+
+        /* get list of blocks which appear at least once and reassign IDs if necessary */
+        const blocks = states.map(state => palette ? blockTypeString(palette.data.data[state]) : "" + state );
+        const new_id_map = new Map<string, number>([ ...new Set(blocks) ].map((x, i) => [ x, i ]));
+        const palette_map = new Map<string, TagData[]>(palette?.data.data.map(x => [ blockTypeString(x), x ]));
+        const new_palette = palette ? [ ...new Set(blocks) ].sort((a, b) => new_id_map.get(a)! - new_id_map.get(b)!).map(block => palette_map.get(block)!) : undefined;
+        palette = palette && new_palette ? {
+            ...palette,
+            data: {
+                ...palette.data,
+                data: new_palette
+            }
+        } : palette;
+        if (palette) states = blocks.map(block => new_id_map.get(block)!);
+
+        /* write out the new blocks */
+        const l = Math.floor(Math.log2((palette?.data.data.length === undefined ? Math.max(...states) : palette?.data.data.length) || 1)) + 1;
         const length = l < 4 ? 4 : l;
         const c = Math.floor(64 / length);
         const toSkip = 64 % c;
@@ -77,7 +93,10 @@ export class BlockDataParser extends BitParser {
         if (workingList.length > 0) d.setBits(toSkip, 0);
         for (let i = 0; i < c - workingList.length; ++i) d.setBits(length, 0);
         for (let i = workingList.length - 1; i >= 0; --i) d.setBits(length, workingList[i]);
-        return r;
+
+        /* wrap the new palette in a tag if necessary and return */
+        return [ r, palette ];
+
     }
 
     /**

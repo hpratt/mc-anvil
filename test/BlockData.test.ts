@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { BinaryParser, BlockDataParser, TagType } from "../src";
+import { BinaryParser, BlockDataParser, Palette, TagType } from "../src";
 
 function TEST_ARRAY() {
 	const c = new Uint32Array(2);
@@ -36,7 +36,7 @@ describe("BlockDataParser", () => {
 	});
 
 	it("should write blocks to a buffer", async () => {
-		const data = BlockDataParser.writeBlockStates([ 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0 ]);
+		const data = BlockDataParser.writeBlockStates([ 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0 ])[0];
 		const p = await axios.get("http://localhost:8001/palette5.json", { responseType: 'json' });
 		const b = new BlockDataParser({
 			type: TagType.LONG_ARRAY,
@@ -47,14 +47,26 @@ describe("BlockDataParser", () => {
 	});
 
 	it("should write blocks to a buffer", async () => {
-		const data = BlockDataParser.writeBlockStates([ 0, 1, 2, 16, 4, 0, 1, 2, 3, 4, 0, 1 ]);
+		const data = BlockDataParser.writeBlockStates([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0 ])[0];
 		const p = await axios.get("http://localhost:8001/palette16.json", { responseType: 'json' });
 		const b = new BlockDataParser({
 			type: TagType.LONG_ARRAY,
 			name: "BlockStates",
 			data
 		}, p.data);
-		expect(b.getBlocks(false, 12)).toEqual([ 0, 1, 2, 16, 4, 0, 1, 2, 3, 4, 0, 1 ].map( x => p.data.data.data[x] ));
+		expect(b.getBlocks(false, 17)).toEqual([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0 ].map( x => p.data.data.data[x] ));
+	});
+
+	it("should write blocks to a buffer, leaving out extra palette entries", async () => {
+		const p = await axios.get("http://localhost:8001/palette16.json", { responseType: 'json' });
+		const data = BlockDataParser.writeBlockStates([ 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 ], p.data as Palette);
+		const b = new BlockDataParser({
+			type: TagType.LONG_ARRAY,
+			name: "BlockStates",
+			data: data[0]
+		}, data[1]!);
+		expect(b.getBlocks(false, 16)).toEqual([ 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 ].map( x => data[1]!.data.data[x] ));
+		expect(data[1]!.data.data.length).toBe(4);
 	});
 
 });
