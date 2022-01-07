@@ -370,7 +370,7 @@ export class Chunk {
             /* write out updated blocks and palette for this section */
             const [ r, palette ] = BlockDataParser.writeBlockStates(blocks, this.palettes.get(yy)!);
             const index = sections.findIndex(x => x.find(xx => xx.name === "Y")?.data === yy);
-            this.root = nbtTagReducer(this.root, {
+            this.root = (palette?.data.data.length || 0) > 1 ? nbtTagReducer(this.root, {
                 type: NBTActions.NBT_ADD_TAG,
                 overwrite: true,
                 path: `sections/${index}/block_states`,
@@ -379,7 +379,11 @@ export class Chunk {
                     name: 'data',
                     data: r
                 }
-            }); // updates block state data
+            }) : nbtTagReducer(this.root, {
+                type: NBTActions.NBT_DELETE_TAG,
+                recursive: true,
+                path: `sections/${index}/block_states/data`
+            }); // updates block state data or deletes it if the palette is a single item
             this.palettes.set(yy, palette);
             this.blockStates.delete(yy);
             this.root = nbtTagReducer(this.root, {
