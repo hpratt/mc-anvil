@@ -34,6 +34,23 @@ export function indexFromBiomeCoordinate(coordinate: Coordinate3D): number {
     return (y * 4 + z) * 4 + x;
 }
 
+export function sectionBlockStates(section: TagData[]): BlockStates | undefined {
+    const b = section.find(x => x.name === "BlockStates") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "data");
+    return b as BlockStates | undefined;
+}
+
+export function sectionPalette(section: TagData[]): Palette | undefined {
+    const p = section.find(x => x.name === "Palette" || x.name === "palette") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "palette");
+    return p as Palette | undefined;
+}
+
+export function blockParserFromSection(section: TagData[]): BlockDataParser | undefined {
+    const blockstates = sectionBlockStates(section);
+    const palette = sectionPalette(section);
+    if (!blockstates || !palette) return;
+    return new BlockDataParser(blockstates, palette);
+}
+
 /**
  * Class for parsing, mutating, and writing chunk-format data to and from NBT-format blobs. This class handles
  * NBT-related parsing and writing only; chunk compression logic is handled by the AnvilParser class.
@@ -174,8 +191,8 @@ export class Chunk {
             let yy = (section.find(x => x.name === "Y")?.data || 0) as number * 16;
             if (yy >= 4032) yy -= 4096;
             const [ xx, zz ] = this.getCoordinates() || [ 0, 0 ];
-            const blockData = section.find(x => x.name === "BlockStates") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "data");
-            const palette = section.find(x => x.name === "Palette" || x.name === "palette") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "palette");
+            const blockData = sectionBlockStates(section);
+            const palette = sectionPalette(section);
             if (blockData === undefined || palette === undefined) return [];
             return (new BlockDataParser(blockData as BlockStates, palette as Palette))
                 .findBlocksByName(name)
@@ -194,6 +211,13 @@ export class Chunk {
         const [ s, palette ] = this.sectionBlockStateTensor(yIndex);
         const i = s[mod(coordinates[0], 16)][(coordinates[1] + 64) % 16][mod(coordinates[2], 16)];
         return (palette ? paletteAsList(palette) : [])[i];
+    }
+
+    getSectionContainingCoordinate(coordinates: Coordinate3D): TagData[] | undefined {
+        const s = this.sortedSections();
+        const yIndex = coordinates[1] >= 0 ? Math.floor(coordinates[1] / 16) : Math.floor((coordinates[1] + 4096) / 16);
+        if (!s) return;
+        return s.find(x => x.find(xx => xx.name === "Y")?.data === yIndex) as TagData[];
     }
 
     /**
@@ -287,8 +311,8 @@ export class Chunk {
         const sections = this.sortedSections();
         if (!sections) return [ r, undefined ];
         const section = sections.find(x => x.find(xx => xx.name === "Y")?.data === yIndex) as TagData[];
-        const blockData = section?.find(x => x.name === "BlockStates") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "data");
-        const palette = section?.find(x => x.name === "Palette" || x.name === "palette") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "palette");
+        const blockData = section && sectionBlockStates(section);
+        const palette = section && sectionPalette(section);
         this.blockStates.set(yIndex, r);
         this.palettes.set(yIndex, palette as Palette);
         if (blockData === undefined) return [ r, palette as Palette ];
@@ -310,8 +334,8 @@ export class Chunk {
         const sections = this.sortedSections() || [];
         sections.forEach( (section, y) => {
             const yy = y * 16;
-            const blockData = section.find(x => x.name === "BlockStates") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "data");
-            const palette = section.find(x => x.name === "Palette" || x.name === "palette") || (section.find(x => x.name === "block_states")?.data as TagData[]).find(x => x.name === "palette");
+            const blockData = sectionBlockStates(section);
+            const palette = sectionPalette(section);
             if (blockData === undefined || palette === undefined) return [];
             const b = new BlockDataParser(blockData as BlockStates, palette as Palette);
             b.getBlockTypeIDs().forEach( (v, i) => {
@@ -364,8 +388,29 @@ export class Chunk {
                 path: `sections/${index}/block_states`,
                 tag: (this.palettes.get(yy) || findChildTagAtPath(`sections/${index}/block_states/palette`, this.root))!
             }); // updates palette
+            if (findChildTagAtPath(`sections/${index}/SkyLight`, this.root) !== undefined)
+                this.root = nbtTagReducer(this.root, {
+                    type: NBTActions.NBT_DELETE_TAG,
+                    path: `sections/${index}/SkyLight`
+                });
+            if (findChildTagAtPath(`sections/${index}/BlockLight`, this.root) !== undefined)
+                this.root = nbtTagReducer(this.root, {
+                    type: NBTActions.NBT_DELETE_TAG,
+                    path: `sections/${index}/BlockLight`
+                });
             this.blockStatesDirty.set(yy, false);
 
+        });
+        if (findChildTagAtPath("Heightmaps", this.root) !== undefined)
+            this.root = nbtTagReducer(this.root, {
+                path: "Heightmaps",
+                recursive: true,
+                type: NBTActions.NBT_DELETE_TAG
+            });
+        this.root = nbtTagReducer(this.root, {
+            type: NBTActions.NBT_EDIT_TAG,
+            path: "Status",
+            tag: { name: "Status", type: TagType.STRING, data: "features" }
         });
         return this.root;
 
