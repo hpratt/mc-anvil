@@ -75,7 +75,8 @@ export class BlockDataParser extends BitParser {
         if (palette) states = blocks.map(block => new_id_map.get(block)!);
 
         /* write out the new blocks */
-        const l = Math.floor(Math.log2((palette?.data.data.length === undefined ? Math.max(...states) : palette?.data.data.length) || 1)) + 1;
+        const paletteSize = palette?.data.data.length === undefined ? Math.max(...states) : palette!.data.data.length - 1;
+        const l = Math.floor(Math.log2(paletteSize || 1)) + 1;
         const length = l < 4 ? 4 : l;
         const c = Math.floor(64 / length);
         const toSkip = 64 % c;
