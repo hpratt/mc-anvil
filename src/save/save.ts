@@ -69,19 +69,50 @@ export class SaveParser {
      * Asynchronously retrieves region files from the world save directory.
      * @returns a list of region files, each with coordinates and a corresponding file object.
      */
-     async getRegions(): Promise<RegionFile[]> {
-        return new Promise( (resolve, reject) => {
-            this.root.getDirectory("region", undefined, regionDirectory => {
-                regionDirectory.createReader().readEntries( entries => {
-                    resolve(
-                        entries
-                            .filter(x => x.isFile && isValidRegionFileName(x.name))
-                            .map(x => ({ ...parseRegionName(x.name), file: x as FileEntry }))
+    async getRegions(): Promise<RegionFile[]> {
+        const allEntries: RegionFile[] = [];
+        const readEntriesRecursively = (directory: DirectoryEntry) => (
+            new Promise<void>((resolve, reject) => {
+                const reader = directory.createReader();
+                const readBatch = () => {
+                    reader.readEntries(
+                        entries => {
+                            if (entries.length === 0) { // No more entries to read, resolve the promise
+                                resolve();
+                                return;
+                            }
+                            allEntries.push(
+                                ...entries
+                                    .filter(x => x.isFile && isValidRegionFileName(x.name))
+                                    .map(x => ({
+                                        ...parseRegionName(x.name),
+                                        file: x as FileEntry,
+                                    }))
+                            );
+                            readBatch(); // Continue reading the next batch of entries
+                        },
+                        error => reject(error)
                     );
-                }, reject);
-            }, reject);
+                };
+      
+                // Start reading the first batch of entries
+                readBatch();
+            })
+        );     
+        return new Promise<RegionFile[]>((resolve, reject) => {
+            this.root.getDirectory(
+                "region",
+                undefined,
+                (regionDirectory) => {
+                    readEntriesRecursively(regionDirectory).then(() => {
+                        resolve(allEntries);
+                    }).catch(reject);
+                },
+                reject
+            );
         });
     }
+      
 
     /**
      * Asynchronously retrieves a file entry corresponding to the world's level NBT tag.
