@@ -5,6 +5,24 @@ function mockFileSystem(root: DirectoryEntry | any): FileSystem {
     };
 }
 
+class MockDirectoryReader implements DirectoryReader {
+
+    private children: Entry[] = [];
+    private entryPointer: number;
+
+    constructor(children: Entry[]) {
+        this.children = children;
+        this.entryPointer = 0;
+    }
+
+    readEntries(success: (entries: Entry[]) => void, _: (e: any) => void) {
+        const results = this.children.slice(this.entryPointer, this.entryPointer + 100);
+        this.entryPointer += 100;
+        success(results);
+    }
+
+}
+
 export class MockDirectoryEntry implements DirectoryEntry {
     
     public name: string;
@@ -39,14 +57,8 @@ export class MockDirectoryEntry implements DirectoryEntry {
 
     getParent() { return this.parent; }
 
-    readEntries(success: (entries: Entry[]) => void, _: (e: any) => void) {
-        success(this.children);
-    }
-
     createReader() {
-        return {
-            readEntries: this.readEntries.bind(this)
-        };
+        return new MockDirectoryReader(this.children);
     }
 
     copyTo() {}

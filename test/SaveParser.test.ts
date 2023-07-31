@@ -23,10 +23,9 @@ describe("SaveParser", () => {
         expect(parseRegionName("r.999.100.mca")).toEqual({ x: 999, z: 100 });
     });
 
-    it("should read no region files from an empty directory entry", async () => {
+    it("should read region files from a directory entry", async () => {
         const ROOT = new MockDirectoryEntry("");
         const REGIONS = new MockDirectoryEntry("region", ROOT);
-        expect(await new SaveParser(ROOT).getRegions()).toEqual([]);
         new MockFileEntry("r.1.2.mca", REGIONS);
         new MockFileEntry("r.1.100.mca", ROOT);
         new MockFileEntry("x.1.100.mca", REGIONS);
@@ -37,6 +36,16 @@ describe("SaveParser", () => {
         expect(f[0].x).toBe(1);
         expect(f[0].z).toBe(2);
         expect(await parser.getLevel()).not.toBeUndefined();
+    });
+
+    it("should read 100 region files", async () => {
+        const ROOT = new MockDirectoryEntry("");
+        const REGIONS = new MockDirectoryEntry("region", ROOT);
+        for (let i = 0; i < 102; ++i)
+            new MockFileEntry(`r.1.${i}.mca`, REGIONS);
+        const parser = new SaveParser(ROOT);
+        const f = await parser.getRegions();
+        expect(f.length).toBe(102);
     });
 
     it("should set a block in the region", async () => {
