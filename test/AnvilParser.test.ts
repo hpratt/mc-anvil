@@ -53,6 +53,17 @@ describe("AnvilParser", () => {
 		expect(wh![wh!.length - 1]).toEqual([ 148, 148, 148, 149, 149, 148, 149, 149, 148, 148, 148, 149, 147, 147, 148, 148 ]);
 	});
 
+	it("should read a chunk by its chunk coordinates", async () => {
+		const data = await axios.get("http://localhost:8001/r.0.0.mca", { responseType: 'arraybuffer' });
+		const b = new AnvilParser(new Uint8Array(data.data).buffer);
+		const chunk = b.getChunkAtChunkCoordinates(0, 0);
+		expect(chunk).not.toBeUndefined();
+		expect(chunk!.getChunkCoordinates()).toEqual([ 0, 0 ]);
+		expect(chunk!.getBlock([ 0, 0, 0 ])).toEqual({ name: "minecraft:polished_deepslate", properties: {} });
+		/* coordinates not stored in this region must not return a chunk */
+		expect(b.getChunkAtChunkCoordinates(33, 0)).toBeUndefined();
+	});
+
 	it("should read chunk data for a chunk with negative coordinates", async () => {
 		const data = await axios.get("http://localhost:8001/r.-1.-1.mca", { responseType: 'arraybuffer' });
 		const b = new AnvilParser(new Uint8Array(data.data).buffer);

@@ -97,7 +97,7 @@ export class AnvilParser extends ResizableBinaryWriter {
     getChunkAtChunkCoordinates(x: number, z: number): Chunk | undefined {
         return this.getValidMatchingChunkAtOffset(AnvilParser.chunkOffset(x, z), chunk => {
             const coordinates = chunk.getChunkCoordinates();
-            return !coordinates || coordinates[0] !== x || coordinates[1] !== z;
+            return !!coordinates && coordinates[0] === x && coordinates[1] === z;
         });
     }
 
